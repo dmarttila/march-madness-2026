@@ -31,18 +31,22 @@ const short = t => t.length > 11 ? t.replace("Michigan St.","Mich. St.").replace
 
 // Game times for Round of 32 (ET). sortKey = chronological order.
 const GAME_TIMES = {
-  MA:{time:"Sat Mar 21 · 12:10 PM",tv:"CBS", sortKey:1},
-  EC:{time:"Sat Mar 21 · 2:45 PM", tv:"CBS", sortKey:2},
-  EA:{time:"Sat Mar 21 · 5:15 PM", tv:"CBS", sortKey:3},
-  SD:{time:"Sat Mar 21 · 6:10 PM", tv:"TNT", sortKey:4},
-  WC:{time:"Sat Mar 21 · 7:10 PM", tv:"TBS", sortKey:5},
-  SC:{time:"Sat Mar 21 · 7:50 PM", tv:"CBS", sortKey:6},
-  SB:{time:"Sat Mar 21 · 8:45 PM", tv:"TNT", sortKey:7},
-  WB:{time:"Sat Mar 21 · 9:45 PM", tv:"TBS", sortKey:8},
-  MD:{time:"Sun Mar 22 · 2:45 PM", tv:"CBS", sortKey:9},
-  EB:{time:"Sun Mar 22 · 5:15 PM", tv:"CBS", sortKey:10},
-  SA:{time:"Sun Mar 22 · 7:10 PM", tv:"TBS", sortKey:11},
-  ED:{time:"Sun Mar 22 · 8:45 PM", tv:"TNT", sortKey:12},
+  MA:{time:"Sat Mar 21 · 12:10 PM",tv:"CBS",    sortKey:1},
+  EC:{time:"Sat Mar 21 · 2:45 PM", tv:"CBS",    sortKey:2},
+  EA:{time:"Sat Mar 21 · 5:15 PM", tv:"CBS",    sortKey:3},
+  SD:{time:"Sat Mar 21 · 6:10 PM", tv:"TNT",    sortKey:4},
+  WC:{time:"Sat Mar 21 · 7:10 PM", tv:"TBS",    sortKey:5},
+  SC:{time:"Sat Mar 21 · 7:50 PM", tv:"CBS",    sortKey:6},
+  SB:{time:"Sat Mar 21 · 8:45 PM", tv:"TNT",    sortKey:7},
+  WB:{time:"Sat Mar 21 · 9:45 PM", tv:"TBS",    sortKey:8},
+  WD:{time:"Sun Mar 22 · 12:10 PM",tv:"CBS",    sortKey:9},
+  MD:{time:"Sun Mar 22 · 2:45 PM", tv:"CBS",    sortKey:10},
+  EB:{time:"Sun Mar 22 · 5:15 PM", tv:"CBS",    sortKey:11},
+  MC:{time:"Sun Mar 22 · 6:10 PM", tv:"TNT",    sortKey:12},
+  SA:{time:"Sun Mar 22 · 7:10 PM", tv:"TBS",    sortKey:13},
+  WA:{time:"Sun Mar 22 · 7:50 PM", tv:"truTV",  sortKey:14},
+  ED:{time:"Sun Mar 22 · 8:45 PM", tv:"TNT",    sortKey:15},
+  MB:{time:"Sun Mar 22 · 9:45 PM", tv:"TBS",    sortKey:16},
 };
 
 // Maps each R2+ game to the two feeder games whose winners play in it
