@@ -29,12 +29,41 @@ const CHAMP_PICKS = {doug:"Michigan",blair:"Duke",emma:"Arizona",grace:"Michigan
 
 const short = t => t.length > 11 ? t.replace("Michigan St.","Mich. St.").replace("St. John's","St. John's").replace("Cal Baptist","Cal Bap.").replace("Tenn. State","Tenn. St.").replace("Texas Tech","Tex. Tech").replace("High Point","Hi. Point").replace("Iowa St.","Iowa St.") : t;
 
+// Game times for Round of 32 (ET). sortKey = chronological order.
+const GAME_TIMES = {
+  MA:{time:"Sat Mar 21 · 12:10 PM",tv:"CBS", sortKey:1},
+  EC:{time:"Sat Mar 21 · 2:45 PM", tv:"CBS", sortKey:2},
+  EA:{time:"Sat Mar 21 · 5:15 PM", tv:"CBS", sortKey:3},
+  SD:{time:"Sat Mar 21 · 6:10 PM", tv:"TNT", sortKey:4},
+  WC:{time:"Sat Mar 21 · 7:10 PM", tv:"TBS", sortKey:5},
+  SC:{time:"Sat Mar 21 · 7:50 PM", tv:"CBS", sortKey:6},
+  SB:{time:"Sat Mar 21 · 8:45 PM", tv:"TNT", sortKey:7},
+  WB:{time:"Sat Mar 21 · 9:45 PM", tv:"TBS", sortKey:8},
+  MD:{time:"Sun Mar 22 · 2:45 PM", tv:"CBS", sortKey:9},
+  EB:{time:"Sun Mar 22 · 5:15 PM", tv:"CBS", sortKey:10},
+  SA:{time:"Sun Mar 22 · 7:10 PM", tv:"TBS", sortKey:11},
+  ED:{time:"Sun Mar 22 · 8:45 PM", tv:"TNT", sortKey:12},
+};
+
+// Maps each R2+ game to the two feeder games whose winners play in it
+const FEEDERS = {
+  EA:["E1","E2"], EB:["E3","E4"], EC:["E5","E6"], ED:["E7","E8"],
+  SA:["S1","S2"], SB:["S3","S4"], SC:["S5","S6"], SD:["S7","S8"],
+  WA:["W1","W2"], WB:["W3","W4"], WC:["W5","W6"], WD:["W7","W8"],
+  MA:["M1","M2"], MB:["M3","M4"], MC:["M5","M6"], MD:["M7","M8"],
+  ES1:["EA","EB"], ES2:["EC","ED"], SS1:["SA","SB"], SS2:["SC","SD"],
+  WS1:["WA","WB"], WS2:["WC","WD"], MS1:["MA","MB"], MS2:["MC","MD"],
+  EE8:["ES1","ES2"], SE8:["SS1","SS2"], WE8:["WS1","WS2"], ME8:["MS1","MS2"],
+  FFL:["EE8","SE8"], FFR:["WE8","ME8"], CHAMP:["FFL","FFR"]
+};
+
 function BracketScorer() {
   const { games, known_results, names, people } = GAMES_DATA;
 
   const [results, setResults] = useState(known_results);
-  const [activeRound, setActiveRound] = useState("R1");
+  const [activeRound, setActiveRound] = useState("R2");
   const [expandedGame, setExpandedGame] = useState(null);
+  const [sortMode, setSortMode] = useState("region"); // "region" | "time"
 
   const setWinner = (gameId, team) => {
     setResults(r => ({ ...r, [gameId]: r[gameId] === team ? null : team }));
@@ -59,11 +88,21 @@ function BracketScorer() {
   }, [results]);
 
   const maxPossible = useMemo(() => {
+    // Build set of eliminated teams from completed games (t1/t2 known for R1)
+    const deadTeams = new Set();
+    games.forEach(g => {
+      if (results[g.id] && g.t1 && g.t2) {
+        const loser = g.t1 === results[g.id] ? g.t2 : g.t1;
+        deadTeams.add(loser);
+      }
+    });
     const mp = {};
     people.forEach(p => {
       let possible = scores[p].total;
       games.forEach(g => {
-        if (!results[g.id] && g.picks[p]) possible += g.pts;
+        if (!results[g.id] && g.picks[p] && !deadTeams.has(g.picks[p])) {
+          possible += g.pts;
+        }
       });
       mp[p] = possible;
     });
@@ -93,8 +132,50 @@ function BracketScorer() {
     return cw;
   }, [scores, results]);
 
-  const ranked = [...people].sort((a,b) => scores[b].total - scores[a].total || maxPossible[b] - maxPossible[a]);
-  const roundGames = games.filter(g => g.round === activeRound);
+  const deadTeams = useMemo(() => {
+    const dead = new Set();
+    games.forEach(g => {
+      if (results[g.id] && g.t1 && g.t2) {
+        dead.add(g.t1 === results[g.id] ? g.t2 : g.t1);
+      }
+    });
+    return dead;
+  }, [results]);
+
+  // Count alive (non-dead) remaining picks per person — used as tiebreaker
+  const alivePicks = useMemo(() => {
+    const ap = {};
+    people.forEach(p => {
+      ap[p] = games.filter(g => !results[g.id] && g.picks[p] && !deadTeams.has(g.picks[p])).length;
+    });
+    return ap;
+  }, [scores, deadTeams, results]);
+
+  const ranked = [...people].sort((a,b) =>
+    scores[b].total - scores[a].total ||
+    maxPossible[b] - maxPossible[a] ||
+    alivePicks[b] - alivePicks[a]
+  );
+
+  // Compute display ranks, giving ties the same number (e.g. two people at #5)
+  const rankNums = [];
+  ranked.forEach((p, i) => {
+    if (i === 0) { rankNums.push(1); return; }
+    const prev = ranked[i-1];
+    rankNums.push(
+      scores[prev].total === scores[p].total && maxPossible[prev] === maxPossible[p]
+        ? rankNums[i-1] : i + 1
+    );
+  });
+
+  const roundGames = games
+    .filter(g => g.round === activeRound)
+    .sort((a, b) => {
+      if (sortMode !== "time") return 0; // preserve original order for region sort
+      const ak = GAME_TIMES[a.id]?.sortKey ?? 999;
+      const bk = GAME_TIMES[b.id]?.sortKey ?? 999;
+      return ak - bk;
+    });
 
   const cardBg = "#1e293b";
   const pageBg = "#0f172a";
@@ -114,23 +195,24 @@ function BracketScorer() {
       {/* Leaderboard strip */}
       <div style={{background:"#0c1a2e",padding:"12px 20px",borderBottom:"2px solid #1e293b",overflowX:"auto",whiteSpace:"nowrap"}}>
         {ranked.map((p,i) => {
-          const medal = i===0?"🥇":i===1?"🥈":i===2?"🥉":"";
-          const lead = i===0;
+          const rank = rankNums[i];
+          const medal = rank===1?"🥇":rank===2?"🥈":rank===3?"🥉":"";
+          const lead = rank===1;
           return (
             <span key={p} style={{display:"inline-block",marginRight:8,
               background: lead ? "#1e3a5f" : "#1e293b",
               border: lead ? "1px solid #3b82f6" : "1px solid #334155",
               borderRadius:8,padding:"8px 12px",textAlign:"center",verticalAlign:"top",
               boxShadow: lead ? "0 0 10px rgba(59,130,246,0.25)" : "none"}}>
-              <div style={{fontSize:10,color:lead?"#93c5fd":"#64748b"}}>{medal} #{i+1}</div>
+              <div style={{fontSize:10,color:lead?"#93c5fd":"#64748b"}}>{medal} #{rank}</div>
               <div style={{fontSize:12,fontWeight:600,color:lead?"#e2e8f0":"#94a3b8"}}>{names[p].split(" ")[0]}</div>
               <div style={{fontSize:20,fontWeight:700,color:lead?"#60a5fa":"#64748b",lineHeight:"1.1"}}>{scores[p].total}</div>
-              <div style={{fontSize:9,color:"#475569"}}>max {maxPossible[p]}</div>
+              <div style={{fontSize:9,color:"#94a3b8"}}>max {maxPossible[p]}</div>
               <div style={{fontSize:9,marginTop:3,borderTop:"1px solid #1e293b",paddingTop:3,
                 color: canWin[p] ? "#4ade80" : "#ef4444", fontWeight:700}}>
                 {canWin[p] ? "✓ ALIVE" : "✗ OUT"}
               </div>
-              <div style={{fontSize:9,color:"#334155",marginTop:2}}>🏆 {CHAMP_PICKS[p]}</div>
+              <div style={{fontSize:9,color:"#94a3b8",marginTop:2}}>🏆 {CHAMP_PICKS[p]}</div>
             </span>
           );
         })}
@@ -158,6 +240,18 @@ function BracketScorer() {
             </button>
           );
         })}
+        <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:4,padding:"0 4px"}}>
+          {["region","time"].map(mode => (
+            <button key={mode} onClick={() => setSortMode(mode)} style={{
+              padding:"4px 10px",borderRadius:6,border:"none",cursor:"pointer",fontSize:11,
+              background: sortMode===mode ? "#3b82f6" : "#1e293b",
+              color: sortMode===mode ? "#fff" : "#64748b",
+              fontWeight: sortMode===mode ? 600 : 400,
+            }}>
+              {mode==="region" ? "By Region" : "By Time"}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Game cards */}
@@ -171,7 +265,17 @@ function BracketScorer() {
             const pk = g.picks[p];
             if (pk) { if (!pickCount[pk]) pickCount[pk] = []; pickCount[pk].push(names[p].split(" ")[0]); }
           });
-          const teams = g.t1 && g.t2 ? [g.t1, g.t2] : Object.keys(pickCount).sort((a,b) => (pickCount[b]||[]).length-(pickCount[a]||[]).length);
+          // Confirmed contestants: R1 uses t1/t2; R2+ derives from feeder results
+          const feeders = FEEDERS[g.id];
+          const confirmed = g.t1 && g.t2
+            ? [g.t1, g.t2]
+            : feeders ? feeders.map(f => results[f]).filter(Boolean) : [];
+          // Dead picks: picked teams that are eliminated and not an actual contestant
+          const deadPicks = Object.keys(pickCount).filter(t => deadTeams.has(t) && !confirmed.includes(t));
+          // Full list: confirmed teams first, then dead picks; fall back to all picks if nothing confirmed
+          const teams = confirmed.length > 0
+            ? [...confirmed, ...deadPicks]
+            : Object.keys(pickCount).sort((a,b) => (pickCount[b]||[]).length-(pickCount[a]||[]).length);
 
           return (
             <div key={g.id} style={{background:cardBg,borderRadius:10,border:"1px solid #334155",overflow:"hidden"}}>
@@ -186,24 +290,32 @@ function BracketScorer() {
               </div>
 
               <div style={{padding:"10px"}}>
-                <div style={{fontSize:11,color:"#64748b",marginBottom:8}}>{g.label}</div>
+                <div style={{fontSize:11,color:"#64748b",marginBottom:GAME_TIMES[g.id]?4:8}}>
+                  {g.region ? REGION_LABELS[g.region]+" · " : ""}{ROUND_LABELS[g.round]}
+                </div>
+                {GAME_TIMES[g.id] && (
+                  <div style={{fontSize:10,color:"#94a3b8",marginBottom:8}}>
+                    {GAME_TIMES[g.id].time} · <span style={{color:"#60a5fa"}}>{GAME_TIMES[g.id].tv}</span>
+                  </div>
+                )}
 
                 <div style={{display:"flex",flexDirection:"column",gap:4}}>
                   {teams.map(team => {
                     const isWin = winner === team;
                     const isLoss = winner && winner !== team;
+                    const isDead = deadTeams.has(team);
                     const cnt = (pickCount[team]||[]).length;
                     return (
-                      <button key={team} onClick={() => setWinner(g.id, team)} style={{
+                      <button key={team} onClick={isDead ? undefined : () => setWinner(g.id, team)} disabled={isDead} style={{
                         display:"flex",alignItems:"center",justifyContent:"space-between",
-                        padding:"8px 10px",borderRadius:7,cursor:"pointer",textAlign:"left",
-                        border: isWin ? "2px solid #22c55e" : isLoss ? "1px solid #1e293b" : "1px solid #475569",
-                        background: isWin ? "#052e16" : isLoss ? "#0f172a" : "#0f172a",
-                        color: isWin ? "#86efac" : isLoss ? "#334155" : "#e2e8f0",
-                        fontWeight: isWin ? 700 : 400,fontSize:13,
+                        padding:"8px 10px",borderRadius:7,cursor:isDead?"default":"pointer",textAlign:"left",
+                        border: isWin ? "2px solid #22c55e" : "1px solid #1e293b",
+                        background: isWin ? "#052e16" : "#0f172a",
+                        color: isWin ? "#86efac" : isDead ? "#94a3b8" : "#e2e8f0",
+                        fontWeight: isWin ? 700 : 400, fontSize:13,
                       }}>
-                        <span>{short(team)} {isWin ? "✓" : ""}</span>
-                        <span style={{fontSize:10,color:isWin?"#4ade80":isLoss?"#1e293b":"#64748b"}}>
+                        <span style={{textDecoration: isDead ? "line-through" : "none"}}>{short(team)} {isWin ? "✓" : ""}</span>
+                        <span style={{fontSize:10,color:isWin?"#4ade80":"#64748b"}}>
                           {cnt > 0 ? cnt+"/"+ people.length : ""}
                         </span>
                       </button>
@@ -254,7 +366,7 @@ function BracketScorer() {
             <tbody>
               {ranked.map((p,i) => (
                 <tr key={p} style={{borderTop:"1px solid #1e293b",background:i%2===0?"#1a2744":"transparent"}}>
-                  <td style={{padding:"7px 12px",color:i===0?"#93c5fd":"#cbd5e1",fontWeight:i===0?700:400}}>
+                  <td style={{padding:"7px 12px",color:rankNums[i]===1?"#93c5fd":"#cbd5e1",fontWeight:rankNums[i]===1?700:400}}>
                     {names[p]}
                   </td>
                   {ROUND_ORDER.map(r => (
