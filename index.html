@@ -69,17 +69,9 @@ function BracketScorer() {
   const [expandedGame, setExpandedGame] = useState(null);
   const [sortMode, setSortMode] = useState("time"); // "region" | "time"
   const [simulatingPlayer, setSimulatingPlayer] = useState(null);
+  const [simOverrides, setSimOverrides] = useState({});
 
-  const effectiveResults = useMemo(() => {
-    if (!simulatingPlayer) return results;
-    const sim = {};
-    games.forEach(g => {
-      if (g.round === activeRound && !results[g.id] && g.picks[simulatingPlayer]) {
-        sim[g.id] = g.picks[simulatingPlayer];
-      }
-    });
-    return { ...results, ...sim };
-  }, [results, simulatingPlayer, activeRound]);
+  const effectiveResults = useMemo(() => ({ ...results, ...simOverrides }), [results, simOverrides]);
 
   const setWinner = (gameId, team) => {
     setResults(r => ({ ...r, [gameId]: r[gameId] === team ? null : team }));
@@ -216,7 +208,21 @@ function BracketScorer() {
           const lead = rank===1;
           const isSim = simulatingPlayer === p;
           return (
-            <span key={p} onClick={() => setSimulatingPlayer(isSim ? null : p)}
+            <span key={p} onClick={() => {
+              if (isSim) {
+                setSimulatingPlayer(null);
+                setSimOverrides({});
+              } else {
+                setSimulatingPlayer(p);
+                const sim = {};
+                games.forEach(g => {
+                  if (g.round === activeRound && !results[g.id] && g.picks[p]) {
+                    sim[g.id] = g.picks[p];
+                  }
+                });
+                setSimOverrides(sim);
+              }
+            }}
               style={{display:"inline-block",marginRight:8,cursor:"pointer",
               background: isSim ? "#2d1b4e" : lead ? "#1e3a5f" : "#1e293b",
               border: isSim ? "2px solid #a855f7" : lead ? "1px solid #3b82f6" : "1px solid #334155",
@@ -243,7 +249,7 @@ function BracketScorer() {
           const done = rg.filter(g => results[g.id]).length;
           const active = r === activeRound;
           return (
-            <button key={r} onClick={() => setActiveRound(r)} style={{
+            <button key={r} onClick={() => { setActiveRound(r); setSimulatingPlayer(null); setSimOverrides({}); }} style={{
               padding:"10px 14px",border:"none",cursor:"pointer",background:"transparent",
               color: active ? "#f1f5f9" : "#64748b",
               fontWeight: active ? 700 : 400,fontSize:13,
@@ -273,11 +279,18 @@ function BracketScorer() {
       </div>
 
       {/* Simulation banner */}
-      {simulatingPlayer && (
-        <div style={{background:"#2d1b4e",borderBottom:"1px solid #7e22ce",padding:"8px 20px",display:"flex",alignItems:"center",gap:8}}>
+      {(simulatingPlayer || Object.keys(simOverrides).length > 0) && (
+        <div style={{background:"#2d1b4e",borderBottom:"1px solid #7e22ce",padding:"8px 20px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
           <span style={{fontSize:12,color:"#e9d5ff"}}>
-            Simulating <strong>{names[simulatingPlayer].split(" ")[0]}'s</strong> picks for {ROUND_LABELS[activeRound]} — tap their name again to clear
+            {simulatingPlayer
+              ? <>Simulating <strong>{names[simulatingPlayer].split(" ")[0]}'s</strong> picks — tap a purple pick to remove it, tap name to clear all</>
+              : <>{Object.keys(simOverrides).length} custom pick{Object.keys(simOverrides).length !== 1 ? "s" : ""} active</>
+            }
           </span>
+          <button onClick={() => { setSimulatingPlayer(null); setSimOverrides({}); }}
+            style={{background:"#7e22ce",border:"none",color:"#fff",borderRadius:5,padding:"3px 8px",fontSize:11,cursor:"pointer"}}>
+            Clear
+          </button>
         </div>
       )}
 
@@ -336,7 +349,15 @@ function BracketScorer() {
                     const cnt = (pickCount[team]||[]).length;
                     return (
                       <button key={team}
-                        onClick={isDisabled ? undefined : () => setWinner(g.id, team)}
+                        onClick={isDisabled ? undefined : () => {
+                          if (isSimWin) {
+                            setSimOverrides(s => { const n = {...s}; delete n[g.id]; return n; });
+                            setSimulatingPlayer(null);
+                          } else {
+                            setSimOverrides(s => { const n = {...s}; delete n[g.id]; return n; });
+                            setWinner(g.id, team);
+                          }
+                        }}
                         disabled={isDisabled}
                         style={{
                           display:"flex",alignItems:"center",justifyContent:"space-between",
