@@ -344,6 +344,7 @@ function BracketScorer() {
                   {teams.map(team => {
                     const isActualWin = known_results[g.id] === team;
                     const isSimWin = simOverrides[g.id] === team;
+                    const isManualWin = winner === team && !isActualWin && !isSimWin;
                     const isDead = deadTeams.has(team);
                     const isDisabled = isDead || isLocked;
                     const cnt = (pickCount[team]||[]).length;
@@ -362,15 +363,15 @@ function BracketScorer() {
                         style={{
                           display:"flex",alignItems:"center",justifyContent:"space-between",
                           padding:"8px 10px",borderRadius:7,cursor:isDisabled?"default":"pointer",textAlign:"left",
-                          border: isActualWin ? "2px solid #22c55e" : isSimWin ? "2px solid #a855f7" : "1px solid #1e293b",
-                          background: isActualWin ? "#052e16" : isSimWin ? "#2d1b4e" : "#0f172a",
-                          color: isActualWin ? "#86efac" : isSimWin ? "#d8b4fe" : isDead ? "#94a3b8" : "#e2e8f0",
-                          fontWeight: (isActualWin || isSimWin) ? 700 : 400, fontSize:13,
+                          border: isActualWin ? "2px solid #22c55e" : isSimWin ? "2px solid #a855f7" : isManualWin ? "2px solid #22c55e" : "1px solid #1e293b",
+                          background: isActualWin ? "#052e16" : isSimWin ? "#2d1b4e" : isManualWin ? "#052e16" : "#0f172a",
+                          color: isActualWin ? "#86efac" : isSimWin ? "#d8b4fe" : isManualWin ? "#86efac" : isDead ? "#94a3b8" : "#e2e8f0",
+                          fontWeight: (isActualWin || isSimWin || isManualWin) ? 700 : 400, fontSize:13,
                         }}>
                         <span style={{textDecoration: isDead ? "line-through" : "none"}}>
                           {short(team)} {isActualWin ? "✓" : ""}
                         </span>
-                        <span style={{fontSize:10,color:isActualWin?"#4ade80":isSimWin?"#c084fc":"#64748b"}}>
+                        <span style={{fontSize:10,color:isActualWin?"#4ade80":isSimWin?"#c084fc":isManualWin?"#4ade80":"#64748b"}}>
                           {cnt > 0 ? cnt+"/"+ people.length : ""}
                         </span>
                       </button>
