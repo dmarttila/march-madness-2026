@@ -343,7 +343,7 @@ function BracketScorer() {
                 <div style={{display:"flex",flexDirection:"column",gap:4}}>
                   {teams.map(team => {
                     const isActualWin = known_results[g.id] === team;
-                    const isSimWin = !isActualWin && winner === team;
+                    const isSimWin = simOverrides[g.id] === team;
                     const isDead = deadTeams.has(team);
                     const isDisabled = isDead || isLocked;
                     const cnt = (pickCount[team]||[]).length;
