@@ -104,7 +104,7 @@ function BracketScorer() {
   const [hideCompleted, setHideCompleted] = useState(false);
   const [simulatingPlayer, setSimulatingPlayer] = useState(null);
   const [simOverrides, setSimOverrides] = useState({});
-  const [bracketPlayer, setBracketPlayer] = useState(people[0]);
+  const [bracketPlayers, setBracketPlayers] = useState([people[0]]);
   const [colorScheme, setColorScheme] = useState("dark");
   const [randomSeed, setRandomSeed] = useState(1);
 
@@ -222,24 +222,37 @@ function BracketScorer() {
 
   const gameById = useMemo(() => { const m = {}; games.forEach(g => { m[g.id] = g; }); return m; }, []);
 
-  // Bracket view renderers
-  const bR1Slot = (gameId, player) => {
+  // Two fixed colors for bracket comparison (work across all themes)
+  const PC = ["#60a5fa","#f97316"]; // blue, orange
+
+  // Bracket view renderers — players is always an array (1 or 2 elements)
+  const bR1Slot = (gameId, players) => {
     const g = gameById[gameId];
     const actual = effectiveResults[gameId];
+    const multi = players.length > 1;
     return (
       <div key={gameId} style={{borderBottom:"1px solid "+border2}}>
         {[g.t1, g.t2].map(team => {
-          const isPick = g.picks[player] === team;
           const won = actual === team;
           const lost = actual && actual !== team;
+          const pickerIdxs = players.map((p,i) => g.picks[p] === team ? i : -1).filter(i => i >= 0);
+          const isPick = pickerIdxs.length > 0;
           return (
-            <div key={team} style={{height:SH,display:"flex",alignItems:"center",padding:"0 6px",fontSize:11,
+            <div key={team} style={{height:SH,display:"flex",alignItems:"center",padding:"0 4px",fontSize:11,
               color: isPick ? (won?"#86efac":lost?"#fca5a5":text) : (lost?textDimmer:textDim),
               fontWeight: isPick ? 700 : 400,
               textDecoration: lost ? "line-through" : "none",
               background: isPick && !won && !lost ? "#ffffff08" : "transparent",
             }}>
-              {short(team)}
+              <span style={{flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginRight:2}}>{short(team)}</span>
+              {multi && (
+                <span style={{display:"flex",gap:2,flexShrink:0}}>
+                  {players.map((p,i) => (
+                    <span key={i} style={{width:5,height:5,borderRadius:"50%",
+                      background: g.picks[p] === team ? PC[i] : "transparent"}} />
+                  ))}
+                </span>
+              )}
             </div>
           );
         })}
@@ -247,23 +260,75 @@ function BracketScorer() {
     );
   };
 
-  const bSlot = (gameId, spans, player) => {
+  const bSlot = (gameId, spans, players) => {
     const g = gameById[gameId];
-    const pick = g.picks[player];
     const actual = effectiveResults[gameId];
-    const correct = actual && pick === actual;
-    const wrong = actual && pick !== actual;
-    return (
-      <div key={gameId} style={{height:spans*2*SH,display:"flex",alignItems:"center",padding:"0 8px",
-        borderBottom:"1px solid "+border2,
-        background: correct?"#052e1650":wrong?"#2d0a0a50":"transparent",
-      }}>
-        <span style={{fontSize:11,fontWeight:700,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",
-          color: correct?"#86efac":wrong?"#fca5a5":textMuted,
-          textDecoration: wrong?"line-through":"none",
+    const height = spans * 2 * SH;
+    const multi = players.length > 1;
+    const picks = players.map(p => g.picks[p]);
+
+    if (!multi) {
+      const pick = picks[0];
+      const correct = actual && pick === actual;
+      const wrong = actual && pick !== actual;
+      return (
+        <div key={gameId} style={{height,display:"flex",alignItems:"center",padding:"0 8px",
+          borderBottom:"1px solid "+border2,
+          background: correct?"#052e1650":wrong?"#2d0a0a50":"transparent",
         }}>
-          {pick ? short(pick) : "—"}{correct?" ✓":""}
-        </span>
+          <span style={{fontSize:11,fontWeight:700,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",
+            color: correct?"#86efac":wrong?"#fca5a5":textMuted,
+            textDecoration: wrong?"line-through":"none",
+          }}>
+            {pick ? short(pick) : "—"}{correct?" ✓":""}
+          </span>
+        </div>
+      );
+    }
+
+    const agree = picks[0] === picks[1];
+    if (agree) {
+      const pick = picks[0];
+      const correct = actual && pick === actual;
+      const wrong = actual && pick !== actual;
+      return (
+        <div key={gameId} style={{height,display:"flex",flexDirection:"column",justifyContent:"center",
+          padding:"0 5px",borderBottom:"1px solid "+border2,
+          background: correct?"#052e1650":wrong?"#2d0a0a50":"transparent",
+        }}>
+          <div style={{display:"flex",gap:3,alignItems:"center"}}>
+            {PC.map((c,i) => <span key={i} style={{width:5,height:5,borderRadius:"50%",background:c,flexShrink:0}} />)}
+            <span style={{fontSize:10,fontWeight:700,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",
+              color: correct?"#86efac":wrong?"#fca5a5":textMuted,
+              textDecoration: wrong?"line-through":"none",
+            }}>
+              {pick ? short(pick) : "—"}{correct?" ✓":""}
+            </span>
+          </div>
+        </div>
+      );
+    }
+
+    // Different picks — show both stacked
+    return (
+      <div key={gameId} style={{height,display:"flex",flexDirection:"column",justifyContent:"center",
+        gap:2,padding:"2px 5px",borderBottom:"1px solid "+border2,
+      }}>
+        {picks.map((pick, i) => {
+          const correct = actual && pick === actual;
+          const wrong = actual && pick !== actual;
+          return (
+            <div key={i} style={{display:"flex",gap:3,alignItems:"center"}}>
+              <span style={{width:5,height:5,borderRadius:"50%",background:PC[i],flexShrink:0}} />
+              <span style={{fontSize:10,fontWeight:700,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",
+                color: correct?"#86efac":wrong?"#fca5a5":PC[i],
+                textDecoration: wrong?"line-through":"none",
+              }}>
+                {pick ? short(pick) : "—"}{correct?" ✓":""}
+              </span>
+            </div>
+          );
+        })}
       </div>
     );
   };
@@ -397,29 +462,46 @@ function BracketScorer() {
       {/* Bracket view */}
       {mode === "bracket" && (
         <div style={{padding:"16px 20px 40px"}}>
-          {/* Player selector */}
-          <div style={{overflowX:"auto",whiteSpace:"nowrap",marginBottom:12,paddingBottom:4}}>
-            {people.map(p => (
-              <button key={p} onClick={() => setBracketPlayer(p)} style={{
-                marginRight:6,padding:"6px 14px",borderRadius:20,border:"none",cursor:"pointer",
-                fontSize:12,fontWeight:bracketPlayer===p?700:400,
-                background:bracketPlayer===p?"#3b82f6":chipBg,
-                color:bracketPlayer===p?"#fff":textMuted,
-              }}>
-                {names[p].split(" ")[0]}
-              </button>
-            ))}
+          {/* Player selector — tap to select up to 2; tap again to deselect */}
+          <div style={{overflowX:"auto",whiteSpace:"nowrap",marginBottom:8,paddingBottom:4}}>
+            {people.map(p => {
+              const idx = bracketPlayers.indexOf(p);
+              const sel = idx >= 0;
+              return (
+                <button key={p} onClick={() => {
+                  if (sel) {
+                    if (bracketPlayers.length > 1) setBracketPlayers(bp => bp.filter(x => x !== p));
+                  } else {
+                    setBracketPlayers(bp => bp.length < 2 ? [...bp, p] : [bp[1], p]);
+                  }
+                }} style={{
+                  marginRight:6,padding:"6px 14px",borderRadius:20,border:"none",cursor:"pointer",
+                  fontSize:12,fontWeight:sel?700:400,
+                  background: sel ? PC[idx] : chipBg,
+                  color: sel ? "#fff" : textMuted,
+                }}>
+                  {names[p].split(" ")[0]}
+                </button>
+              );
+            })}
+          </div>
+          <div style={{marginBottom:12,fontSize:10,color:textMuted}}>
+            {bracketPlayers.length === 1 ? "Tap another player to compare" : "Tap a selected player to deselect"}
           </div>
 
           {/* Score summary */}
-          <div style={{marginBottom:14,fontSize:13,color:textMuted}}>
-            {names[bracketPlayer]} &nbsp;·&nbsp;
-            <span style={{color:"#60a5fa",fontWeight:700}}>{scores[bracketPlayer].total} pts</span>
-            &nbsp;·&nbsp; max {maxPossible[bracketPlayer]}
-            &nbsp;·&nbsp;
-            <span style={{color:canWin[bracketPlayer]?"#4ade80":"#ef4444",fontWeight:700}}>
-              {canWin[bracketPlayer]?"✓ Alive":"✗ Out"}
-            </span>
+          <div style={{marginBottom:14,display:"flex",gap:20,flexWrap:"wrap"}}>
+            {bracketPlayers.map((p,i) => (
+              <div key={p} style={{fontSize:13,color:textMuted}}>
+                <span style={{color:PC[i],fontWeight:700}}>{names[p].split(" ")[0]}</span>
+                &nbsp;·&nbsp;
+                <span style={{color:PC[i],fontWeight:700}}>{scores[p].total} pts</span>
+                &nbsp;·&nbsp;max {maxPossible[p]}&nbsp;·&nbsp;
+                <span style={{color:canWin[p]?"#4ade80":"#ef4444",fontWeight:700}}>
+                  {canWin[p]?"✓ Alive":"✗ Out"}
+                </span>
+              </div>
+            ))}
           </div>
 
           {/* Region brackets — East+West row, South+Midwest row */}
@@ -443,15 +525,15 @@ function BracketScorer() {
                 <div style={{overflowX:"auto"}}>
                   <div style={{display:"flex",background:cardBg,borderRadius:8,overflow:"hidden",width:"fit-content",minWidth:"100%"}}>
                     {/* Left region: R1 → R2 → S16 → E8 */}
-                    <div style={{...col,minWidth:100}}>{hdr("R1",lc)}{left.r1.map(id=>bR1Slot(id,bracketPlayer))}</div>
-                    <div style={{...col,minWidth:72}}>{hdr("R2")}{left.r2.map(id=>bSlot(id,2,bracketPlayer))}</div>
-                    <div style={{...col,minWidth:72}}>{hdr("S16")}{left.s16.map(id=>bSlot(id,4,bracketPlayer))}</div>
-                    <div style={{...col,minWidth:72,borderRight:"2px solid #0f172a"}}>{hdr("E8")}{bSlot(left.e8,8,bracketPlayer)}</div>
+                    <div style={{...col,minWidth:100}}>{hdr("R1",lc)}{left.r1.map(id=>bR1Slot(id,bracketPlayers))}</div>
+                    <div style={{...col,minWidth:72}}>{hdr("R2")}{left.r2.map(id=>bSlot(id,2,bracketPlayers))}</div>
+                    <div style={{...col,minWidth:72}}>{hdr("S16")}{left.s16.map(id=>bSlot(id,4,bracketPlayers))}</div>
+                    <div style={{...col,minWidth:72,borderRight:"2px solid "+border2}}>{hdr("E8")}{bSlot(left.e8,8,bracketPlayers)}</div>
                     {/* Right region: E8 → S16 → R2 → R1 (mirrored) */}
-                    <div style={{...col,minWidth:72}}>{hdr("E8")}{bSlot(right.e8,8,bracketPlayer)}</div>
-                    <div style={{...col,minWidth:72}}>{hdr("S16")}{right.s16.map(id=>bSlot(id,4,bracketPlayer))}</div>
-                    <div style={{...col,minWidth:72}}>{hdr("R2")}{right.r2.map(id=>bSlot(id,2,bracketPlayer))}</div>
-                    <div style={{display:"flex",flexDirection:"column",minWidth:100}}>{hdr("R1",rc)}{right.r1.map(id=>bR1Slot(id,bracketPlayer))}</div>
+                    <div style={{...col,minWidth:72}}>{hdr("E8")}{bSlot(right.e8,8,bracketPlayers)}</div>
+                    <div style={{...col,minWidth:72}}>{hdr("S16")}{right.s16.map(id=>bSlot(id,4,bracketPlayers))}</div>
+                    <div style={{...col,minWidth:72}}>{hdr("R2")}{right.r2.map(id=>bSlot(id,2,bracketPlayers))}</div>
+                    <div style={{display:"flex",flexDirection:"column",minWidth:100}}>{hdr("R1",rc)}{right.r1.map(id=>bR1Slot(id,bracketPlayers))}</div>
                   </div>
                 </div>
               </div>
@@ -462,40 +544,66 @@ function BracketScorer() {
           <div style={{marginTop:8,display:"flex",gap:8,flexWrap:"wrap",marginBottom:10}}>
             {["FFL","FFR"].map(id => {
               const g = gameById[id];
-              const pick = g.picks[bracketPlayer];
               const actual = effectiveResults[id];
-              const correct = actual && pick === actual;
-              const wrong = actual && pick !== actual;
+              const picks = bracketPlayers.map(p => g.picks[p]);
+              const agree = bracketPlayers.length > 1 && picks[0] === picks[1];
               return (
                 <div key={id} style={{flex:1,minWidth:130,padding:"10px 12px",borderRadius:8,background:cardBg,
-                  border:`1px solid ${correct?"#22c55e":wrong?"#7f1d1d":border}`}}>
-                  <div style={{fontSize:10,color:textMuted,marginBottom:4}}>
+                  border:`1px solid ${border}`}}>
+                  <div style={{fontSize:10,color:textMuted,marginBottom:6}}>
                     {id==="FFL"?"Final Four · East/South":"Final Four · West/Midwest"}
                   </div>
-                  <div style={{fontSize:14,fontWeight:700,
-                    color:correct?"#86efac":wrong?"#fca5a5":textSub,
-                    textDecoration:wrong?"line-through":"none"}}>
-                    {pick||"—"}{correct?" ✓":""}
-                  </div>
+                  {agree ? (
+                    <div style={{display:"flex",gap:4,alignItems:"center"}}>
+                      {PC.map((c,i) => <span key={i} style={{width:6,height:6,borderRadius:"50%",background:c}} />)}
+                      <span style={{fontSize:13,fontWeight:700,color:textSub}}>{picks[0]||"—"}</span>
+                    </div>
+                  ) : picks.map((pick,i) => {
+                    const correct = actual && pick === actual;
+                    const wrong = actual && pick !== actual;
+                    return (
+                      <div key={i} style={{display:"flex",gap:4,alignItems:"center",marginBottom:2}}>
+                        <span style={{width:6,height:6,borderRadius:"50%",background:PC[i],flexShrink:0}} />
+                        <span style={{fontSize:12,fontWeight:700,
+                          color:correct?"#86efac":wrong?"#fca5a5":PC[i],
+                          textDecoration:wrong?"line-through":"none"}}>
+                          {pick||"—"}{correct?" ✓":""}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               );
             })}
           </div>
           {(() => {
             const g = gameById["CHAMP"];
-            const pick = g.picks[bracketPlayer];
             const actual = effectiveResults["CHAMP"];
-            const correct = actual && pick === actual;
-            const wrong = actual && pick !== actual;
+            const picks = bracketPlayers.map(p => g.picks[p]);
+            const agree = bracketPlayers.length > 1 && picks[0] === picks[1];
             return (
               <div style={{padding:"14px 16px",borderRadius:10,background:cardBg,textAlign:"center",
-                border:`2px solid ${correct?"#22c55e":wrong?"#7f1d1d":"#f59e0b"}`}}>
-                <div style={{fontSize:11,color:textSub,marginBottom:6}}>🏆 National Champion</div>
-                <div style={{fontSize:20,fontWeight:800,
-                  color:correct?"#86efac":wrong?"#fca5a5":"#fbbf24",
-                  textDecoration:wrong?"line-through":"none"}}>
-                  {pick||"—"}{correct?" ✓":""}
-                </div>
+                border:`2px solid #f59e0b`}}>
+                <div style={{fontSize:11,color:textSub,marginBottom:8}}>🏆 National Champion</div>
+                {agree ? (
+                  <div style={{display:"flex",gap:6,alignItems:"center",justifyContent:"center"}}>
+                    {PC.map((c,i) => <span key={i} style={{width:7,height:7,borderRadius:"50%",background:c}} />)}
+                    <span style={{fontSize:18,fontWeight:800,color:"#fbbf24"}}>{picks[0]||"—"}</span>
+                  </div>
+                ) : picks.map((pick,i) => {
+                  const correct = actual && pick === actual;
+                  const wrong = actual && pick !== actual;
+                  return (
+                    <div key={i} style={{display:"flex",gap:6,alignItems:"center",justifyContent:"center",marginBottom:4}}>
+                      <span style={{width:7,height:7,borderRadius:"50%",background:PC[i],flexShrink:0}} />
+                      <span style={{fontSize:17,fontWeight:800,
+                        color:correct?"#86efac":wrong?"#fca5a5":PC[i],
+                        textDecoration:wrong?"line-through":"none"}}>
+                        {pick||"—"}{correct?" ✓":""}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             );
           })()}
