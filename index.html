@@ -61,6 +61,14 @@ const FEEDERS = {
   FFL:["EE8","SE8"], FFR:["WE8","ME8"], CHAMP:["FFL","FFR"]
 };
 
+const REGIONS_DEF = [
+  { id:"east",    r1:["E1","E2","E3","E4","E5","E6","E7","E8"], r2:["EA","EB","EC","ED"], s16:["ES1","ES2"], e8:"EE8" },
+  { id:"south",   r1:["S1","S2","S3","S4","S5","S6","S7","S8"], r2:["SA","SB","SC","SD"], s16:["SS1","SS2"], e8:"SE8" },
+  { id:"west",    r1:["W1","W2","W3","W4","W5","W6","W7","W8"], r2:["WA","WB","WC","WD"], s16:["WS1","WS2"], e8:"WE8" },
+  { id:"midwest", r1:["M1","M2","M3","M4","M5","M6","M7","M8"], r2:["MA","MB","MC","MD"], s16:["MS1","MS2"], e8:"ME8" },
+];
+const SH = 20; // px per team row in bracket view
+
 function BracketScorer() {
   const { games, known_results, names, people } = GAMES_DATA;
 
@@ -70,6 +78,8 @@ function BracketScorer() {
   const [sortMode, setSortMode] = useState("time"); // "region" | "time"
   const [simulatingPlayer, setSimulatingPlayer] = useState(null);
   const [simOverrides, setSimOverrides] = useState({});
+  const [view, setView] = useState("scoring");
+  const [bracketPlayer, setBracketPlayer] = useState(people[0]);
 
   const effectiveResults = useMemo(() => ({ ...results, ...simOverrides }), [results, simOverrides]);
 
@@ -185,6 +195,54 @@ function BracketScorer() {
       return ak - bk;
     });
 
+  const gameById = useMemo(() => { const m = {}; games.forEach(g => { m[g.id] = g; }); return m; }, []);
+
+  // Bracket view renderers
+  const bR1Slot = (gameId, player) => {
+    const g = gameById[gameId];
+    const actual = effectiveResults[gameId];
+    return (
+      <div key={gameId} style={{borderBottom:"1px solid #0f172a"}}>
+        {[g.t1, g.t2].map(team => {
+          const isPick = g.picks[player] === team;
+          const won = actual === team;
+          const lost = actual && actual !== team;
+          return (
+            <div key={team} style={{height:SH,display:"flex",alignItems:"center",padding:"0 6px",fontSize:11,
+              color: isPick ? (won?"#86efac":lost?"#fca5a5":"#e2e8f0") : (lost?"#374151":"#475569"),
+              fontWeight: isPick ? 700 : 400,
+              textDecoration: lost ? "line-through" : "none",
+              background: isPick && !won && !lost ? "#ffffff08" : "transparent",
+            }}>
+              {short(team)}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const bSlot = (gameId, spans, player) => {
+    const g = gameById[gameId];
+    const pick = g.picks[player];
+    const actual = effectiveResults[gameId];
+    const correct = actual && pick === actual;
+    const wrong = actual && pick !== actual;
+    return (
+      <div key={gameId} style={{height:spans*2*SH,display:"flex",alignItems:"center",padding:"0 8px",
+        borderBottom:"1px solid #0f172a",
+        background: correct?"#052e1650":wrong?"#2d0a0a50":"transparent",
+      }}>
+        <span style={{fontSize:11,fontWeight:700,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",
+          color: correct?"#86efac":wrong?"#fca5a5":"#64748b",
+          textDecoration: wrong?"line-through":"none",
+        }}>
+          {pick ? short(pick) : "—"}{correct?" ✓":""}
+        </span>
+      </div>
+    );
+  };
+
   const cardBg = "#1e293b";
   const pageBg = "#0f172a";
 
@@ -265,7 +323,7 @@ function BracketScorer() {
           );
         })}
         <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:4,padding:"0 4px"}}>
-          {["region","time"].map(mode => (
+          {view === "scoring" && ["region","time"].map(mode => (
             <button key={mode} onClick={() => setSortMode(mode)} style={{
               padding:"4px 10px",borderRadius:6,border:"none",cursor:"pointer",fontSize:11,
               background: sortMode===mode ? "#3b82f6" : "#1e293b",
@@ -275,6 +333,14 @@ function BracketScorer() {
               {mode==="region" ? "By Region" : "By Time"}
             </button>
           ))}
+          <button onClick={() => setView(view==="bracket"?"scoring":"bracket")} style={{
+            padding:"4px 10px",borderRadius:6,border:"none",cursor:"pointer",fontSize:11,
+            background: view==="bracket" ? "#f59e0b" : "#1e293b",
+            color: view==="bracket" ? "#000" : "#64748b",
+            fontWeight: view==="bracket" ? 700 : 400,
+          }}>
+            Brackets
+          </button>
         </div>
       </div>
 
@@ -294,8 +360,121 @@ function BracketScorer() {
         </div>
       )}
 
+      {/* Bracket view */}
+      {view === "bracket" && (
+        <div style={{padding:"16px 20px 40px"}}>
+          {/* Player selector */}
+          <div style={{overflowX:"auto",whiteSpace:"nowrap",marginBottom:12,paddingBottom:4}}>
+            {people.map(p => (
+              <button key={p} onClick={() => setBracketPlayer(p)} style={{
+                marginRight:6,padding:"6px 14px",borderRadius:20,border:"none",cursor:"pointer",
+                fontSize:12,fontWeight:bracketPlayer===p?700:400,
+                background:bracketPlayer===p?"#3b82f6":"#1e293b",
+                color:bracketPlayer===p?"#fff":"#64748b",
+              }}>
+                {names[p].split(" ")[0]}
+              </button>
+            ))}
+          </div>
+
+          {/* Score summary */}
+          <div style={{marginBottom:14,fontSize:13,color:"#64748b"}}>
+            {names[bracketPlayer]} &nbsp;·&nbsp;
+            <span style={{color:"#60a5fa",fontWeight:700}}>{scores[bracketPlayer].total} pts</span>
+            &nbsp;·&nbsp; max {maxPossible[bracketPlayer]}
+            &nbsp;·&nbsp;
+            <span style={{color:canWin[bracketPlayer]?"#4ade80":"#ef4444",fontWeight:700}}>
+              {canWin[bracketPlayer]?"✓ Alive":"✗ Out"}
+            </span>
+          </div>
+
+          {/* Region brackets */}
+          {REGIONS_DEF.map(rd => {
+            const rc = REGION_COLORS[rd.id];
+            const col = {display:"flex",flexDirection:"column",borderRight:"1px solid #0f172a"};
+            const hdr = (label) => (
+              <div style={{fontSize:9,fontWeight:700,color:"#475569",textTransform:"uppercase",
+                letterSpacing:"0.5px",padding:"3px 6px",background:"#0f172a",borderBottom:"1px solid #0f172a",
+                textAlign:"center",whiteSpace:"nowrap"}}>
+                {label}
+              </div>
+            );
+            return (
+              <div key={rd.id} style={{marginBottom:12}}>
+                <div style={{fontSize:10,fontWeight:700,color:rc,letterSpacing:"0.8px",
+                  textTransform:"uppercase",marginBottom:4}}>
+                  {REGION_LABELS[rd.id]} Region
+                </div>
+                <div style={{overflowX:"auto"}}>
+                  <div style={{display:"flex",background:"#1e293b",borderRadius:8,overflow:"hidden",width:"fit-content",minWidth:"100%"}}>
+                    <div style={{...col,minWidth:100}}>
+                      {hdr("R1")}
+                      {rd.r1.map(id => bR1Slot(id, bracketPlayer))}
+                    </div>
+                    <div style={{...col,minWidth:76}}>
+                      {hdr("R2")}
+                      {rd.r2.map(id => bSlot(id, 2, bracketPlayer))}
+                    </div>
+                    <div style={{...col,minWidth:76}}>
+                      {hdr("Sweet 16")}
+                      {rd.s16.map(id => bSlot(id, 4, bracketPlayer))}
+                    </div>
+                    <div style={{display:"flex",flexDirection:"column",minWidth:76}}>
+                      {hdr("Elite 8")}
+                      {bSlot(rd.e8, 8, bracketPlayer)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Final Four + Championship */}
+          <div style={{marginTop:8,display:"flex",gap:8,flexWrap:"wrap",marginBottom:10}}>
+            {["FFL","FFR"].map(id => {
+              const g = gameById[id];
+              const pick = g.picks[bracketPlayer];
+              const actual = effectiveResults[id];
+              const correct = actual && pick === actual;
+              const wrong = actual && pick !== actual;
+              return (
+                <div key={id} style={{flex:1,minWidth:130,padding:"10px 12px",borderRadius:8,background:cardBg,
+                  border:`1px solid ${correct?"#22c55e":wrong?"#7f1d1d":"#334155"}`}}>
+                  <div style={{fontSize:10,color:"#64748b",marginBottom:4}}>
+                    {id==="FFL"?"Final Four · East/South":"Final Four · West/Midwest"}
+                  </div>
+                  <div style={{fontSize:14,fontWeight:700,
+                    color:correct?"#86efac":wrong?"#fca5a5":"#94a3b8",
+                    textDecoration:wrong?"line-through":"none"}}>
+                    {pick||"—"}{correct?" ✓":""}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {(() => {
+            const g = gameById["CHAMP"];
+            const pick = g.picks[bracketPlayer];
+            const actual = effectiveResults["CHAMP"];
+            const correct = actual && pick === actual;
+            const wrong = actual && pick !== actual;
+            return (
+              <div style={{padding:"14px 16px",borderRadius:10,background:cardBg,textAlign:"center",
+                border:`2px solid ${correct?"#22c55e":wrong?"#7f1d1d":"#f59e0b"}`}}>
+                <div style={{fontSize:11,color:"#94a3b8",marginBottom:6}}>🏆 National Champion</div>
+                <div style={{fontSize:20,fontWeight:800,
+                  color:correct?"#86efac":wrong?"#fca5a5":"#fbbf24",
+                  textDecoration:wrong?"line-through":"none"}}>
+                  {pick||"—"}{correct?" ✓":""}
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+      )}
+
       {/* Game cards */}
-      <div style={{padding:"16px 20px",display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:10}}>
+      {view === "scoring" && <div style={{padding:"16px 20px",display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:10}}>
         {roundGames.map(g => {
           const winner = effectiveResults[g.id];
           const isLocked = !!known_results[g.id];
@@ -402,9 +581,10 @@ function BracketScorer() {
             </div>
           );
         })}
-      </div>
+      </div>}
 
       {/* Score table */}
+      {view === "scoring" &&
       <div style={{padding:"0 20px 40px"}}>
         <div style={{fontSize:12,color:"#64748b",marginBottom:8,fontWeight:500}}>Full Score Breakdown</div>
         <div style={{overflowX:"auto"}}>
@@ -443,7 +623,7 @@ function BracketScorer() {
             </tbody>
           </table>
         </div>
-      </div>
+      </div>}
     </div>
   );
 }
