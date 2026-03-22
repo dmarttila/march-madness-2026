@@ -274,7 +274,7 @@ function BracketScorer() {
                 setSimulatingPlayer(p);
                 const sim = {};
                 games.forEach(g => {
-                  if (g.round === activeRound && !results[g.id] && g.picks[p]) {
+                  if (g.round === activeRound && !results[g.id] && g.picks[p] && !deadTeams.has(g.picks[p])) {
                     sim[g.id] = g.picks[p];
                   }
                 });
