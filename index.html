@@ -76,6 +76,7 @@ function BracketScorer() {
   const [activeRound, setActiveRound] = useState("R2");
   const [expandedGame, setExpandedGame] = useState(null);
   const [mode, setMode] = useState("time"); // "time" | "region" | "bracket"
+  const [hideCompleted, setHideCompleted] = useState(false);
   const [simulatingPlayer, setSimulatingPlayer] = useState(null);
   const [simOverrides, setSimOverrides] = useState({});
   const [bracketPlayer, setBracketPlayer] = useState(people[0]);
@@ -186,7 +187,7 @@ function BracketScorer() {
   });
 
   const roundGames = games
-    .filter(g => g.round === activeRound)
+    .filter(g => g.round === activeRound && !(hideCompleted && known_results[g.id]))
     .sort((a, b) => {
       if (mode !== "time") return 0; // preserve original order for region sort
       const ak = GAME_TIMES[a.id]?.sortKey ?? 999;
@@ -321,7 +322,14 @@ function BracketScorer() {
             </button>
           );
         })}
-        <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:4,padding:"0 4px"}}>
+        <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:8,padding:"0 4px"}}>
+          {mode !== "bracket" && (
+            <label style={{display:"flex",alignItems:"center",gap:4,cursor:"pointer",fontSize:11,color:"#64748b",whiteSpace:"nowrap"}}>
+              <input type="checkbox" checked={hideCompleted} onChange={e => setHideCompleted(e.target.checked)}
+                style={{cursor:"pointer",accentColor:"#3b82f6"}} />
+              Hide done
+            </label>
+          )}
           {[["time","By Time"],["region","By Region"],["bracket","Brackets"]].map(([m,label]) => (
             <button key={m} onClick={() => setMode(m)} style={{
               padding:"4px 10px",borderRadius:6,border:"none",cursor:"pointer",fontSize:11,
