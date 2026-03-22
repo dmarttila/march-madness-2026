@@ -9,7 +9,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #0f172a; }
+    body { background: #0f172a; } /* overridden by React root div */
   </style>
 </head>
 <body>
@@ -69,6 +69,13 @@ const REGIONS_DEF = [
 ];
 const SH = 20; // px per team row in bracket view
 
+const DARK_T  = { pageBg:"#0f172a",cardBg:"#1e293b",headerBg:"#0c1a2e",border:"#334155",border2:"#1e293b",text:"#e2e8f0",textSub:"#94a3b8",textMuted:"#64748b",textDim:"#475569",textDimmer:"#334155",chipBg:"#1e293b",chipLeadBg:"#1e3a5f",inputBg:"#0f172a",rowAlt:"#1a2744" };
+const LIGHT_T = { pageBg:"#f1f5f9",cardBg:"#ffffff",headerBg:"#e2e8f0",border:"#cbd5e1",border2:"#e8edf3",text:"#0f172a",textSub:"#334155",textMuted:"#64748b",textDim:"#94a3b8",textDimmer:"#cbd5e1",chipBg:"#e2e8f0",chipLeadBg:"#bfdbfe",inputBg:"#f8fafc",rowAlt:"#e8edf3" };
+function makeRandT(n) {
+  const h = Math.round((n*137.508)%360);
+  return { pageBg:`hsl(${h},60%,8%)`,cardBg:`hsl(${h},40%,16%)`,headerBg:`hsl(${h},70%,5%)`,border:`hsl(${h},30%,35%)`,border2:`hsl(${h},40%,18%)`,text:`hsl(${h},20%,92%)`,textSub:`hsl(${h},15%,72%)`,textMuted:`hsl(${h},12%,56%)`,textDim:`hsl(${h},10%,44%)`,textDimmer:`hsl(${h},8%,32%)`,chipBg:`hsl(${h},40%,16%)`,chipLeadBg:`hsl(${h},50%,23%)`,inputBg:`hsl(${h},60%,8%)`,rowAlt:`hsl(${h},50%,13%)` };
+}
+
 function BracketScorer() {
   const { games, known_results, names, people } = GAMES_DATA;
 
@@ -80,6 +87,8 @@ function BracketScorer() {
   const [simulatingPlayer, setSimulatingPlayer] = useState(null);
   const [simOverrides, setSimOverrides] = useState({});
   const [bracketPlayer, setBracketPlayer] = useState(people[0]);
+  const [colorScheme, setColorScheme] = useState("dark");
+  const [randomSeed, setRandomSeed] = useState(1);
 
   const effectiveResults = useMemo(() => ({ ...results, ...simOverrides }), [results, simOverrides]);
 
@@ -202,14 +211,14 @@ function BracketScorer() {
     const g = gameById[gameId];
     const actual = effectiveResults[gameId];
     return (
-      <div key={gameId} style={{borderBottom:"1px solid #0f172a"}}>
+      <div key={gameId} style={{borderBottom:"1px solid "+border2}}>
         {[g.t1, g.t2].map(team => {
           const isPick = g.picks[player] === team;
           const won = actual === team;
           const lost = actual && actual !== team;
           return (
             <div key={team} style={{height:SH,display:"flex",alignItems:"center",padding:"0 6px",fontSize:11,
-              color: isPick ? (won?"#86efac":lost?"#fca5a5":"#e2e8f0") : (lost?"#374151":"#475569"),
+              color: isPick ? (won?"#86efac":lost?"#fca5a5":text) : (lost?textDimmer:textDim),
               fontWeight: isPick ? 700 : 400,
               textDecoration: lost ? "line-through" : "none",
               background: isPick && !won && !lost ? "#ffffff08" : "transparent",
@@ -230,11 +239,11 @@ function BracketScorer() {
     const wrong = actual && pick !== actual;
     return (
       <div key={gameId} style={{height:spans*2*SH,display:"flex",alignItems:"center",padding:"0 8px",
-        borderBottom:"1px solid #0f172a",
+        borderBottom:"1px solid "+border2,
         background: correct?"#052e1650":wrong?"#2d0a0a50":"transparent",
       }}>
         <span style={{fontSize:11,fontWeight:700,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",
-          color: correct?"#86efac":wrong?"#fca5a5":"#64748b",
+          color: correct?"#86efac":wrong?"#fca5a5":textMuted,
           textDecoration: wrong?"line-through":"none",
         }}>
           {pick ? short(pick) : "—"}{correct?" ✓":""}
@@ -243,23 +252,33 @@ function BracketScorer() {
     );
   };
 
-  const cardBg = "#1e293b";
-  const pageBg = "#0f172a";
+  const T = colorScheme==="light" ? LIGHT_T : colorScheme==="random" ? makeRandT(randomSeed) : DARK_T;
+  const {pageBg,cardBg,headerBg,border,border2,text,textSub,textMuted,textDim,textDimmer,chipBg,chipLeadBg,inputBg,rowAlt} = T;
 
   return (
-    <div style={{fontFamily:"system-ui,sans-serif",background:pageBg,minHeight:"100vh",color:"#e2e8f0"}}>
+    <div style={{fontFamily:"system-ui,sans-serif",background:pageBg,minHeight:"100vh",color:text}}>
 
       {/* Header */}
-      <div style={{background:"#0c1a2e",padding:"16px 20px",borderBottom:"1px solid #1e293b",display:"flex",alignItems:"center",gap:10}}>
+      <div style={{background:headerBg,padding:"16px 20px",borderBottom:"1px solid "+border2,display:"flex",alignItems:"center",gap:10}}>
         <span style={{fontSize:22}}>🏀</span>
-        <div>
-          <div style={{fontSize:18,fontWeight:700,color:"#f1f5f9"}}>Tahoe Crappers March Madness Extravaganza Pool</div>
-          <div style={{fontSize:11,color:"#64748b"}}>{Object.keys(results).length} / 63 results entered · Click team to set winner, click again to clear</div>
+        <div style={{flex:1}}>
+          <div style={{fontSize:18,fontWeight:700,color:text}}>Tahoe Crappers March Madness Extravaganza Pool</div>
+          <div style={{fontSize:11,color:textMuted}}>{Object.keys(results).length} / 63 results entered · Click team to set winner, click again to clear</div>
+        </div>
+        <div style={{display:"flex",gap:4,flexShrink:0}}>
+          {[["dark","🌙"],["light","☀️"],["random","🎨"]].map(([s,icon]) => (
+            <button key={s} onClick={() => { setColorScheme(s); if(s==="random") setRandomSeed(n=>n+1); }} style={{
+              background:colorScheme===s?"#3b82f6":border2,border:"none",borderRadius:6,
+              padding:"5px 8px",cursor:"pointer",fontSize:15,opacity:colorScheme===s?1:0.55,
+            }}>
+              {icon}
+            </button>
+          ))}
         </div>
       </div>
 
       {/* Leaderboard strip */}
-      <div style={{background:"#0c1a2e",padding:"12px 20px",borderBottom:"2px solid #1e293b",overflowX:"auto",whiteSpace:"nowrap"}}>
+      <div style={{background:headerBg,padding:"12px 20px",borderBottom:"2px solid "+border2,overflowX:"auto",whiteSpace:"nowrap"}}>
         {ranked.map((p,i) => {
           const rank = rankNums[i];
           const medal = rank===1?"🥇":rank===2?"🥈":rank===3?"🥉":"";
@@ -282,26 +301,26 @@ function BracketScorer() {
               }
             }}
               style={{display:"inline-block",marginRight:8,cursor:"pointer",
-              background: isSim ? "#2d1b4e" : lead ? "#1e3a5f" : "#1e293b",
-              border: isSim ? "2px solid #a855f7" : lead ? "1px solid #3b82f6" : "1px solid #334155",
+              background: isSim ? "#2d1b4e" : lead ? chipLeadBg : chipBg,
+              border: isSim ? "2px solid #a855f7" : lead ? "1px solid #3b82f6" : "1px solid "+border,
               borderRadius:8,padding:"8px 12px",textAlign:"center",verticalAlign:"top",
               boxShadow: isSim ? "0 0 12px rgba(168,85,247,0.4)" : lead ? "0 0 10px rgba(59,130,246,0.25)" : "none"}}>
-              <div style={{fontSize:10,color:isSim?"#c084fc":lead?"#93c5fd":"#64748b"}}>{medal} #{rank}</div>
-              <div style={{fontSize:12,fontWeight:600,color:isSim?"#e2e8f0":lead?"#e2e8f0":"#94a3b8"}}>{names[p].split(" ")[0]}</div>
-              <div style={{fontSize:20,fontWeight:700,color:isSim?"#c084fc":lead?"#60a5fa":"#64748b",lineHeight:"1.1"}}>{scores[p].total}</div>
-              <div style={{fontSize:9,color:"#94a3b8"}}>max {maxPossible[p]}</div>
-              <div style={{fontSize:9,marginTop:3,borderTop:"1px solid #1e293b",paddingTop:3,
+              <div style={{fontSize:10,color:isSim?"#c084fc":lead?"#93c5fd":textMuted}}>{medal} #{rank}</div>
+              <div style={{fontSize:12,fontWeight:600,color:isSim?"#e2e8f0":lead?"#e2e8f0":textSub}}>{names[p].split(" ")[0]}</div>
+              <div style={{fontSize:20,fontWeight:700,color:isSim?"#c084fc":lead?"#60a5fa":textMuted,lineHeight:"1.1"}}>{scores[p].total}</div>
+              <div style={{fontSize:9,color:textSub}}>max {maxPossible[p]}</div>
+              <div style={{fontSize:9,marginTop:3,borderTop:"1px solid "+border2,paddingTop:3,
                 color: canWin[p] ? "#4ade80" : "#ef4444", fontWeight:700}}>
                 {canWin[p] ? "✓ ALIVE" : "✗ OUT"}
               </div>
-              <div style={{fontSize:9,color:"#94a3b8",marginTop:2}}>🏆 {CHAMP_PICKS[p]}</div>
+              <div style={{fontSize:9,color:textSub,marginTop:2}}>🏆 {CHAMP_PICKS[p]}</div>
             </span>
           );
         })}
       </div>
 
       {/* Round tabs */}
-      <div style={{display:"flex",padding:"0 20px",borderBottom:"1px solid #1e293b",background:pageBg,overflowX:"auto"}}>
+      <div style={{display:"flex",padding:"0 20px",borderBottom:"1px solid "+border2,background:pageBg,overflowX:"auto"}}>
         {ROUND_ORDER.map(r => {
           const rg = games.filter(g => g.round === r);
           const done = rg.filter(g => results[g.id]).length;
@@ -309,14 +328,14 @@ function BracketScorer() {
           return (
             <button key={r} onClick={() => { setActiveRound(r); setSimulatingPlayer(null); setSimOverrides({}); }} style={{
               padding:"10px 14px",border:"none",cursor:"pointer",background:"transparent",
-              color: active ? "#f1f5f9" : "#64748b",
+              color: active ? text : textMuted,
               fontWeight: active ? 700 : 400,fontSize:13,
               borderBottom: active ? "3px solid #3b82f6" : "3px solid transparent",
               whiteSpace:"nowrap"
             }}>
               {ROUND_LABELS[r]}
               <span style={{marginLeft:5,fontSize:10,
-                color: done===rg.length&&done>0 ? "#22c55e" : active ? "#94a3b8" : "#334155"}}>
+                color: done===rg.length&&done>0 ? "#22c55e" : active ? textSub : textDimmer}}>
                 {done}/{rg.length}
               </span>
             </button>
@@ -324,7 +343,7 @@ function BracketScorer() {
         })}
         <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:8,padding:"0 4px"}}>
           {mode !== "bracket" && (
-            <label style={{display:"flex",alignItems:"center",gap:4,cursor:"pointer",fontSize:11,color:"#64748b",whiteSpace:"nowrap"}}>
+            <label style={{display:"flex",alignItems:"center",gap:4,cursor:"pointer",fontSize:11,color:textMuted,whiteSpace:"nowrap"}}>
               <input type="checkbox" checked={hideCompleted} onChange={e => setHideCompleted(e.target.checked)}
                 style={{cursor:"pointer",accentColor:"#3b82f6"}} />
               Hide done
@@ -333,8 +352,8 @@ function BracketScorer() {
           {[["time","By Time"],["region","By Region"],["bracket","Brackets"]].map(([m,label]) => (
             <button key={m} onClick={() => setMode(m)} style={{
               padding:"4px 10px",borderRadius:6,border:"none",cursor:"pointer",fontSize:11,
-              background: mode===m ? (m==="bracket"?"#f59e0b":"#3b82f6") : "#1e293b",
-              color: mode===m ? (m==="bracket"?"#000":"#fff") : "#64748b",
+              background: mode===m ? (m==="bracket"?"#f59e0b":"#3b82f6") : chipBg,
+              color: mode===m ? (m==="bracket"?"#000":"#fff") : textMuted,
               fontWeight: mode===m ? 700 : 400,
             }}>
               {label}
@@ -368,8 +387,8 @@ function BracketScorer() {
               <button key={p} onClick={() => setBracketPlayer(p)} style={{
                 marginRight:6,padding:"6px 14px",borderRadius:20,border:"none",cursor:"pointer",
                 fontSize:12,fontWeight:bracketPlayer===p?700:400,
-                background:bracketPlayer===p?"#3b82f6":"#1e293b",
-                color:bracketPlayer===p?"#fff":"#64748b",
+                background:bracketPlayer===p?"#3b82f6":chipBg,
+                color:bracketPlayer===p?"#fff":textMuted,
               }}>
                 {names[p].split(" ")[0]}
               </button>
@@ -377,7 +396,7 @@ function BracketScorer() {
           </div>
 
           {/* Score summary */}
-          <div style={{marginBottom:14,fontSize:13,color:"#64748b"}}>
+          <div style={{marginBottom:14,fontSize:13,color:textMuted}}>
             {names[bracketPlayer]} &nbsp;·&nbsp;
             <span style={{color:"#60a5fa",fontWeight:700}}>{scores[bracketPlayer].total} pts</span>
             &nbsp;·&nbsp; max {maxPossible[bracketPlayer]}
@@ -391,10 +410,10 @@ function BracketScorer() {
           {[[REGIONS_DEF[0],REGIONS_DEF[2]],[REGIONS_DEF[1],REGIONS_DEF[3]]].map(([left,right]) => {
             const lc = REGION_COLORS[left.id];
             const rc = REGION_COLORS[right.id];
-            const col = {display:"flex",flexDirection:"column",borderRight:"1px solid #0f172a"};
+            const col = {display:"flex",flexDirection:"column",borderRight:"1px solid "+border2};
             const hdr = (label, color) => (
-              <div style={{fontSize:9,fontWeight:700,color:color||"#475569",textTransform:"uppercase",
-                letterSpacing:"0.5px",padding:"3px 6px",background:"#0f172a",borderBottom:"1px solid #0f172a",
+              <div style={{fontSize:9,fontWeight:700,color:color||textDim,textTransform:"uppercase",
+                letterSpacing:"0.5px",padding:"3px 6px",background:headerBg,borderBottom:"1px solid "+border2,
                 textAlign:"center",whiteSpace:"nowrap"}}>
                 {label}
               </div>
@@ -406,7 +425,7 @@ function BracketScorer() {
                   <div style={{fontSize:10,fontWeight:700,color:rc,letterSpacing:"0.8px",textTransform:"uppercase"}}>{REGION_LABELS[right.id]}</div>
                 </div>
                 <div style={{overflowX:"auto"}}>
-                  <div style={{display:"flex",background:"#1e293b",borderRadius:8,overflow:"hidden",width:"fit-content",minWidth:"100%"}}>
+                  <div style={{display:"flex",background:cardBg,borderRadius:8,overflow:"hidden",width:"fit-content",minWidth:"100%"}}>
                     {/* Left region: R1 → R2 → S16 → E8 */}
                     <div style={{...col,minWidth:100}}>{hdr("R1",lc)}{left.r1.map(id=>bR1Slot(id,bracketPlayer))}</div>
                     <div style={{...col,minWidth:72}}>{hdr("R2")}{left.r2.map(id=>bSlot(id,2,bracketPlayer))}</div>
@@ -433,12 +452,12 @@ function BracketScorer() {
               const wrong = actual && pick !== actual;
               return (
                 <div key={id} style={{flex:1,minWidth:130,padding:"10px 12px",borderRadius:8,background:cardBg,
-                  border:`1px solid ${correct?"#22c55e":wrong?"#7f1d1d":"#334155"}`}}>
-                  <div style={{fontSize:10,color:"#64748b",marginBottom:4}}>
+                  border:`1px solid ${correct?"#22c55e":wrong?"#7f1d1d":border}`}}>
+                  <div style={{fontSize:10,color:textMuted,marginBottom:4}}>
                     {id==="FFL"?"Final Four · East/South":"Final Four · West/Midwest"}
                   </div>
                   <div style={{fontSize:14,fontWeight:700,
-                    color:correct?"#86efac":wrong?"#fca5a5":"#94a3b8",
+                    color:correct?"#86efac":wrong?"#fca5a5":textSub,
                     textDecoration:wrong?"line-through":"none"}}>
                     {pick||"—"}{correct?" ✓":""}
                   </div>
@@ -455,7 +474,7 @@ function BracketScorer() {
             return (
               <div style={{padding:"14px 16px",borderRadius:10,background:cardBg,textAlign:"center",
                 border:`2px solid ${correct?"#22c55e":wrong?"#7f1d1d":"#f59e0b"}`}}>
-                <div style={{fontSize:11,color:"#94a3b8",marginBottom:6}}>🏆 National Champion</div>
+                <div style={{fontSize:11,color:textSub,marginBottom:6}}>🏆 National Champion</div>
                 <div style={{fontSize:20,fontWeight:800,
                   color:correct?"#86efac":wrong?"#fca5a5":"#fbbf24",
                   textDecoration:wrong?"line-through":"none"}}>
@@ -492,23 +511,23 @@ function BracketScorer() {
             : Object.keys(pickCount).sort((a,b) => (pickCount[b]||[]).length-(pickCount[a]||[]).length);
 
           return (
-            <div key={g.id} style={{background:cardBg,borderRadius:10,border:"1px solid #334155",overflow:"hidden"}}>
+            <div key={g.id} style={{background:cardBg,borderRadius:10,border:"1px solid "+border,overflow:"hidden"}}>
               <div style={{background:rc+"18",borderBottom:"1px solid "+rc+"44",padding:"7px 10px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                 <span style={{fontSize:10,fontWeight:700,color:rc,letterSpacing:"0.5px",textTransform:"uppercase"}}>
                   {g.region ? REGION_LABELS[g.region] : ""} {g.pts > 1 ? "· "+g.pts+"pts" : "· 1pt"}
                 </span>
                 <button onClick={() => setExpandedGame(expanded ? null : g.id)}
-                  style={{background:"none",border:"none",color:"#475569",cursor:"pointer",fontSize:10,padding:0}}>
+                  style={{background:"none",border:"none",color:textDim,cursor:"pointer",fontSize:10,padding:0}}>
                   {expanded ? "▲" : "▼"} picks
                 </button>
               </div>
 
               <div style={{padding:"10px"}}>
-                <div style={{fontSize:11,color:"#64748b",marginBottom:GAME_TIMES[g.id]?4:8}}>
+                <div style={{fontSize:11,color:textMuted,marginBottom:GAME_TIMES[g.id]?4:8}}>
                   {g.region ? REGION_LABELS[g.region]+" · " : ""}{ROUND_LABELS[g.round]}
                 </div>
                 {GAME_TIMES[g.id] && (
-                  <div style={{fontSize:10,color:"#94a3b8",marginBottom:8}}>
+                  <div style={{fontSize:10,color:textSub,marginBottom:8}}>
                     {GAME_TIMES[g.id].time} · <span style={{color:"#60a5fa"}}>{GAME_TIMES[g.id].tv}</span>
                   </div>
                 )}
@@ -536,15 +555,15 @@ function BracketScorer() {
                         style={{
                           display:"flex",alignItems:"center",justifyContent:"space-between",
                           padding:"8px 10px",borderRadius:7,cursor:isDisabled?"default":"pointer",textAlign:"left",
-                          border: isActualWin ? "2px solid #22c55e" : isSimWin ? "2px solid #a855f7" : isManualWin ? "2px solid #22c55e" : "1px solid #1e293b",
-                          background: isActualWin ? "#052e16" : isSimWin ? "#2d1b4e" : isManualWin ? "#052e16" : "#0f172a",
-                          color: isActualWin ? "#86efac" : isSimWin ? "#d8b4fe" : isManualWin ? "#86efac" : isDead ? "#94a3b8" : "#e2e8f0",
+                          border: isActualWin ? "2px solid #22c55e" : isSimWin ? "2px solid #a855f7" : isManualWin ? "2px solid #22c55e" : "1px solid "+border2,
+                          background: isActualWin ? "#052e16" : isSimWin ? "#2d1b4e" : isManualWin ? "#052e16" : inputBg,
+                          color: isActualWin ? "#86efac" : isSimWin ? "#d8b4fe" : isManualWin ? "#86efac" : isDead ? textSub : text,
                           fontWeight: (isActualWin || isSimWin || isManualWin) ? 700 : 400, fontSize:13,
                         }}>
                         <span style={{textDecoration: isDead ? "line-through" : "none"}}>
                           {short(team)} {isActualWin ? "✓" : ""}
                         </span>
-                        <span style={{fontSize:10,color:isActualWin?"#4ade80":isSimWin?"#c084fc":isManualWin?"#4ade80":"#64748b"}}>
+                        <span style={{fontSize:10,color:isActualWin?"#4ade80":isSimWin?"#c084fc":isManualWin?"#4ade80":textMuted}}>
                           {cnt > 0 ? cnt+"/"+ people.length : ""}
                         </span>
                       </button>
@@ -561,9 +580,9 @@ function BracketScorer() {
                       return (
                         <span key={p} style={{
                           fontSize:10,padding:"3px 6px",borderRadius:4,
-                          background: correct ? "#052e16" : wrong ? "#2d0a0a" : "#1e293b",
-                          color: correct ? "#86efac" : wrong ? "#fca5a5" : "#64748b",
-                          border: "1px solid " + (correct ? "#166534" : wrong ? "#7f1d1d" : "#334155")
+                          background: correct ? "#052e16" : wrong ? "#2d0a0a" : chipBg,
+                          color: correct ? "#86efac" : wrong ? "#fca5a5" : textMuted,
+                          border: "1px solid " + (correct ? "#166534" : wrong ? "#7f1d1d" : border)
                         }}>
                           {names[p].split(" ")[0]}: {pick ? short(pick) : "?"} {correct?"✓":wrong?"✗":""}
                         </span>
@@ -580,38 +599,38 @@ function BracketScorer() {
       {/* Score table */}
       {mode !== "bracket" &&
       <div style={{padding:"0 20px 40px"}}>
-        <div style={{fontSize:12,color:"#64748b",marginBottom:8,fontWeight:500}}>Full Score Breakdown</div>
+        <div style={{fontSize:12,color:textMuted,marginBottom:8,fontWeight:500}}>Full Score Breakdown</div>
         <div style={{overflowX:"auto"}}>
           <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,background:cardBg,borderRadius:8,overflow:"hidden"}}>
             <thead>
-              <tr style={{background:"#0f172a"}}>
-                <th style={{textAlign:"left",padding:"8px 12px",color:"#94a3b8",fontWeight:600}}>Player</th>
-                {ROUND_ORDER.map(r => <th key={r} style={{textAlign:"center",padding:"8px",color:"#64748b",fontWeight:400,fontSize:11}}>{ROUND_LABELS[r]}</th>)}
-                <th style={{textAlign:"center",padding:"8px 12px",color:"#94a3b8",fontWeight:600}}>Total</th>
-                <th style={{textAlign:"center",padding:"8px 12px",color:"#64748b",fontWeight:400,fontSize:11}}>Max</th>
-                <th style={{textAlign:"center",padding:"8px 12px",color:"#64748b",fontWeight:400,fontSize:11}}>Can Win?</th>
-                <th style={{textAlign:"center",padding:"8px 12px",color:"#64748b",fontWeight:400,fontSize:11}}>🏆 Pick</th>
+              <tr style={{background:inputBg}}>
+                <th style={{textAlign:"left",padding:"8px 12px",color:textSub,fontWeight:600}}>Player</th>
+                {ROUND_ORDER.map(r => <th key={r} style={{textAlign:"center",padding:"8px",color:textMuted,fontWeight:400,fontSize:11}}>{ROUND_LABELS[r]}</th>)}
+                <th style={{textAlign:"center",padding:"8px 12px",color:textSub,fontWeight:600}}>Total</th>
+                <th style={{textAlign:"center",padding:"8px 12px",color:textMuted,fontWeight:400,fontSize:11}}>Max</th>
+                <th style={{textAlign:"center",padding:"8px 12px",color:textMuted,fontWeight:400,fontSize:11}}>Can Win?</th>
+                <th style={{textAlign:"center",padding:"8px 12px",color:textMuted,fontWeight:400,fontSize:11}}>🏆 Pick</th>
               </tr>
             </thead>
             <tbody>
               {ranked.map((p,i) => (
-                <tr key={p} style={{borderTop:"1px solid #1e293b",background:i%2===0?"#1a2744":"transparent"}}>
-                  <td style={{padding:"7px 12px",color:rankNums[i]===1?"#93c5fd":"#cbd5e1",fontWeight:rankNums[i]===1?700:400}}>
+                <tr key={p} style={{borderTop:"1px solid "+border2,background:i%2===0?rowAlt:"transparent"}}>
+                  <td style={{padding:"7px 12px",color:rankNums[i]===1?"#93c5fd":text,fontWeight:rankNums[i]===1?700:400}}>
                     {names[p]}
                   </td>
                   {ROUND_ORDER.map(r => (
                     <td key={r} style={{textAlign:"center",padding:"7px 8px",
-                      color: (scores[p].byRound[r]||0)>0 ? "#86efac" : "#334155",fontWeight:400}}>
+                      color: (scores[p].byRound[r]||0)>0 ? "#86efac" : textDimmer,fontWeight:400}}>
                       {scores[p].byRound[r] || "—"}
                     </td>
                   ))}
                   <td style={{textAlign:"center",padding:"7px 12px",fontWeight:700,color:"#60a5fa",fontSize:14}}>{scores[p].total}</td>
-                  <td style={{textAlign:"center",padding:"7px 12px",color:"#475569",fontSize:11}}>{maxPossible[p]}</td>
+                  <td style={{textAlign:"center",padding:"7px 12px",color:textDim,fontSize:11}}>{maxPossible[p]}</td>
                   <td style={{textAlign:"center",padding:"7px 12px",fontWeight:700,fontSize:12,
                     color: canWin[p] ? "#4ade80" : "#ef4444"}}>
                     {canWin[p] ? "✓" : "✗"}
                   </td>
-                  <td style={{textAlign:"center",padding:"7px 12px",color:"#94a3b8",fontSize:11}}>{CHAMP_PICKS[p]}</td>
+                  <td style={{textAlign:"center",padding:"7px 12px",color:textSub,fontSize:11}}>{CHAMP_PICKS[p]}</td>
                 </tr>
               ))}
             </tbody>
