@@ -69,8 +69,8 @@ const REGIONS_DEF = [
 ];
 const SH = 20; // px per team row in bracket view
 
-const DARK_T  = { pageBg:"#0f172a",cardBg:"#1e293b",headerBg:"#0c1a2e",border:"#334155",border2:"#1e293b",text:"#e2e8f0",textSub:"#94a3b8",textMuted:"#64748b",textDim:"#475569",textDimmer:"#334155",chipBg:"#1e293b",chipLeadBg:"#1e3a5f",inputBg:"#0f172a",rowAlt:"#1a2744" };
-const LIGHT_T = { pageBg:"#f1f5f9",cardBg:"#ffffff",headerBg:"#e2e8f0",border:"#cbd5e1",border2:"#e8edf3",text:"#0f172a",textSub:"#1e293b",textMuted:"#475569",textDim:"#64748b",textDimmer:"#94a3b8",chipBg:"#e2e8f0",chipLeadBg:"#bfdbfe",inputBg:"#f8fafc",rowAlt:"#e8edf3" };
+const DARK_T  = { pageBg:"#0f172a",cardBg:"#1e293b",headerBg:"#0c1a2e",border:"#334155",border2:"#1e293b",text:"#e2e8f0",textSub:"#94a3b8",textMuted:"#64748b",textDim:"#475569",textDimmer:"#334155",chipBg:"#1e293b",chipLeadBg:"#1e3a5f",leadText:"#e2e8f0",leadScore:"#60a5fa",leadRank:"#93c5fd",inputBg:"#0f172a",rowAlt:"#1a2744" };
+const LIGHT_T = { pageBg:"#f1f5f9",cardBg:"#ffffff",headerBg:"#e2e8f0",border:"#cbd5e1",border2:"#e8edf3",text:"#0f172a",textSub:"#1e293b",textMuted:"#475569",textDim:"#64748b",textDimmer:"#94a3b8",chipBg:"#e2e8f0",chipLeadBg:"#bfdbfe",leadText:"#0f172a",leadScore:"#1d4ed8",leadRank:"#1d4ed8",inputBg:"#f8fafc",rowAlt:"#e8edf3" };
 function makeRandT(n) {
   const h = (x) => Math.round((n*137.508 + x) % 360);
   return {
@@ -86,6 +86,9 @@ function makeRandT(n) {
     textDimmer:`hsl(${h(210)},55%,40%)`,
     chipBg:`hsl(${h(270)},75%,22%)`,
     chipLeadBg:`hsl(${h(330)},85%,32%)`,
+    leadText:`hsl(${h(300)},100%,97%)`,
+    leadScore:`hsl(${h(330)},100%,75%)`,
+    leadRank:`hsl(${h(30)},100%,82%)`,
     inputBg:`hsl(${h(15)},90%,8%)`,
     rowAlt:`hsl(${h(75)},80%,16%)`
   };
@@ -268,7 +271,7 @@ function BracketScorer() {
   };
 
   const T = colorScheme==="light" ? LIGHT_T : colorScheme==="random" ? makeRandT(randomSeed) : DARK_T;
-  const {pageBg,cardBg,headerBg,border,border2,text,textSub,textMuted,textDim,textDimmer,chipBg,chipLeadBg,inputBg,rowAlt} = T;
+  const {pageBg,cardBg,headerBg,border,border2,text,textSub,textMuted,textDim,textDimmer,chipBg,chipLeadBg,leadText,leadScore,leadRank,inputBg,rowAlt} = T;
 
   return (
     <div style={{fontFamily:"system-ui,sans-serif",background:pageBg,minHeight:"100vh",color:text}}>
@@ -320,9 +323,9 @@ function BracketScorer() {
               border: isSim ? "2px solid #a855f7" : lead ? "1px solid #3b82f6" : "1px solid "+border,
               borderRadius:8,padding:"8px 12px",textAlign:"center",verticalAlign:"top",
               boxShadow: isSim ? "0 0 12px rgba(168,85,247,0.4)" : lead ? "0 0 10px rgba(59,130,246,0.25)" : "none"}}>
-              <div style={{fontSize:10,color:isSim?"#c084fc":lead?"#93c5fd":textMuted}}>{medal} #{rank}</div>
-              <div style={{fontSize:12,fontWeight:600,color:isSim?"#e2e8f0":lead?"#e2e8f0":textSub}}>{names[p].split(" ")[0]}</div>
-              <div style={{fontSize:20,fontWeight:700,color:isSim?"#c084fc":lead?"#60a5fa":textMuted,lineHeight:"1.1"}}>{scores[p].total}</div>
+              <div style={{fontSize:10,color:isSim?"#c084fc":lead?leadRank:textMuted}}>{medal} #{rank}</div>
+              <div style={{fontSize:12,fontWeight:600,color:isSim?"#e2e8f0":lead?leadText:textSub}}>{names[p].split(" ")[0]}</div>
+              <div style={{fontSize:20,fontWeight:700,color:isSim?"#c084fc":lead?leadScore:textMuted,lineHeight:"1.1"}}>{scores[p].total}</div>
               <div style={{fontSize:9,color:textSub}}>max {maxPossible[p]}</div>
               <div style={{fontSize:9,marginTop:3,borderTop:"1px solid "+border2,paddingTop:3,
                 color: canWin[p] ? "#4ade80" : "#ef4444", fontWeight:700}}>
