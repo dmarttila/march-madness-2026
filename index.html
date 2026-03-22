@@ -388,41 +388,36 @@ function BracketScorer() {
             </span>
           </div>
 
-          {/* Region brackets */}
-          {REGIONS_DEF.map(rd => {
-            const rc = REGION_COLORS[rd.id];
+          {/* Region brackets — East+West row, South+Midwest row */}
+          {[[REGIONS_DEF[0],REGIONS_DEF[2]],[REGIONS_DEF[1],REGIONS_DEF[3]]].map(([left,right]) => {
+            const lc = REGION_COLORS[left.id];
+            const rc = REGION_COLORS[right.id];
             const col = {display:"flex",flexDirection:"column",borderRight:"1px solid #0f172a"};
-            const hdr = (label) => (
-              <div style={{fontSize:9,fontWeight:700,color:"#475569",textTransform:"uppercase",
+            const hdr = (label, color) => (
+              <div style={{fontSize:9,fontWeight:700,color:color||"#475569",textTransform:"uppercase",
                 letterSpacing:"0.5px",padding:"3px 6px",background:"#0f172a",borderBottom:"1px solid #0f172a",
                 textAlign:"center",whiteSpace:"nowrap"}}>
                 {label}
               </div>
             );
             return (
-              <div key={rd.id} style={{marginBottom:12}}>
-                <div style={{fontSize:10,fontWeight:700,color:rc,letterSpacing:"0.8px",
-                  textTransform:"uppercase",marginBottom:4}}>
-                  {REGION_LABELS[rd.id]} Region
+              <div key={left.id} style={{marginBottom:12}}>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                  <div style={{fontSize:10,fontWeight:700,color:lc,letterSpacing:"0.8px",textTransform:"uppercase"}}>{REGION_LABELS[left.id]}</div>
+                  <div style={{fontSize:10,fontWeight:700,color:rc,letterSpacing:"0.8px",textTransform:"uppercase"}}>{REGION_LABELS[right.id]}</div>
                 </div>
                 <div style={{overflowX:"auto"}}>
                   <div style={{display:"flex",background:"#1e293b",borderRadius:8,overflow:"hidden",width:"fit-content",minWidth:"100%"}}>
-                    <div style={{...col,minWidth:100}}>
-                      {hdr("R1")}
-                      {rd.r1.map(id => bR1Slot(id, bracketPlayer))}
-                    </div>
-                    <div style={{...col,minWidth:76}}>
-                      {hdr("R2")}
-                      {rd.r2.map(id => bSlot(id, 2, bracketPlayer))}
-                    </div>
-                    <div style={{...col,minWidth:76}}>
-                      {hdr("Sweet 16")}
-                      {rd.s16.map(id => bSlot(id, 4, bracketPlayer))}
-                    </div>
-                    <div style={{display:"flex",flexDirection:"column",minWidth:76}}>
-                      {hdr("Elite 8")}
-                      {bSlot(rd.e8, 8, bracketPlayer)}
-                    </div>
+                    {/* Left region: R1 → R2 → S16 → E8 */}
+                    <div style={{...col,minWidth:100}}>{hdr("R1",lc)}{left.r1.map(id=>bR1Slot(id,bracketPlayer))}</div>
+                    <div style={{...col,minWidth:72}}>{hdr("R2")}{left.r2.map(id=>bSlot(id,2,bracketPlayer))}</div>
+                    <div style={{...col,minWidth:72}}>{hdr("S16")}{left.s16.map(id=>bSlot(id,4,bracketPlayer))}</div>
+                    <div style={{...col,minWidth:72,borderRight:"2px solid #0f172a"}}>{hdr("E8")}{bSlot(left.e8,8,bracketPlayer)}</div>
+                    {/* Right region: E8 → S16 → R2 → R1 (mirrored) */}
+                    <div style={{...col,minWidth:72}}>{hdr("E8")}{bSlot(right.e8,8,bracketPlayer)}</div>
+                    <div style={{...col,minWidth:72}}>{hdr("S16")}{right.s16.map(id=>bSlot(id,4,bracketPlayer))}</div>
+                    <div style={{...col,minWidth:72}}>{hdr("R2")}{right.r2.map(id=>bSlot(id,2,bracketPlayer))}</div>
+                    <div style={{display:"flex",flexDirection:"column",minWidth:100}}>{hdr("R1",rc)}{right.r1.map(id=>bR1Slot(id,bracketPlayer))}</div>
                   </div>
                 </div>
               </div>
