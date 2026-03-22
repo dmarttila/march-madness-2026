@@ -132,15 +132,25 @@ function BracketScorer() {
     return s;
   }, [effectiveResults]);
 
-  const maxPossible = useMemo(() => {
-    // Build set of eliminated teams from completed games (t1/t2 known for R1)
-    const deadTeams = new Set();
+  // Compute all eliminated teams from every round with a known result.
+  // R1 games have t1/t2 in the data; R2+ games have t1:null but we can
+  // infer the two contestants from FEEDERS (the winners of the feeder games).
+  const deadTeams = useMemo(() => {
+    const dead = new Set();
     games.forEach(g => {
-      if (effectiveResults[g.id] && g.t1 && g.t2) {
-        const loser = g.t1 === effectiveResults[g.id] ? g.t2 : g.t1;
-        deadTeams.add(loser);
+      if (!effectiveResults[g.id]) return;
+      const contestants = g.t1 && g.t2
+        ? [g.t1, g.t2]
+        : (FEEDERS[g.id] || []).map(f => effectiveResults[f]).filter(Boolean);
+      if (contestants.length === 2) {
+        const loser = contestants.find(t => t !== effectiveResults[g.id]);
+        if (loser) dead.add(loser);
       }
     });
+    return dead;
+  }, [effectiveResults]);
+
+  const maxPossible = useMemo(() => {
     const mp = {};
     people.forEach(p => {
       let possible = scores[p].total;
@@ -152,14 +162,12 @@ function BracketScorer() {
       mp[p] = possible;
     });
     return mp;
-  }, [scores, effectiveResults]);
+  }, [scores, effectiveResults, deadTeams]);
 
   const canWin = useMemo(() => {
     // For each person p, simulate the best-case scenario for p:
-    // every remaining game is won by p's pick. Under that outcome,
-    // check if p finishes with the highest score (ties count).
-    // This is provably optimal for p — any deviation from p's picks
-    // either costs p points or hands points to an opponent, never helps.
+    // every remaining game is won by p's pick (skipping eliminated teams).
+    // Under that outcome, check if p finishes with the highest score (ties count).
     const cw = {};
     people.forEach(p => {
       const sim = {};
@@ -167,7 +175,7 @@ function BracketScorer() {
       games.forEach(g => {
         if (!effectiveResults[g.id]) {
           const winner = g.picks[p];
-          if (winner) {
+          if (winner && !deadTeams.has(winner)) {
             people.forEach(q => { if (g.picks[q] === winner) sim[q] += g.pts; });
           }
         }
@@ -175,17 +183,7 @@ function BracketScorer() {
       cw[p] = people.every(q => q === p || sim[p] >= sim[q]);
     });
     return cw;
-  }, [scores, effectiveResults]);
-
-  const deadTeams = useMemo(() => {
-    const dead = new Set();
-    games.forEach(g => {
-      if (effectiveResults[g.id] && g.t1 && g.t2) {
-        dead.add(g.t1 === effectiveResults[g.id] ? g.t2 : g.t1);
-      }
-    });
-    return dead;
-  }, [effectiveResults]);
+  }, [scores, effectiveResults, deadTeams]);
 
   // Count alive (non-dead) remaining picks per person — used as tiebreaker
   const alivePicks = useMemo(() => {
