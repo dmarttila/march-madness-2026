@@ -70,10 +70,25 @@ const REGIONS_DEF = [
 const SH = 20; // px per team row in bracket view
 
 const DARK_T  = { pageBg:"#0f172a",cardBg:"#1e293b",headerBg:"#0c1a2e",border:"#334155",border2:"#1e293b",text:"#e2e8f0",textSub:"#94a3b8",textMuted:"#64748b",textDim:"#475569",textDimmer:"#334155",chipBg:"#1e293b",chipLeadBg:"#1e3a5f",inputBg:"#0f172a",rowAlt:"#1a2744" };
-const LIGHT_T = { pageBg:"#f1f5f9",cardBg:"#ffffff",headerBg:"#e2e8f0",border:"#cbd5e1",border2:"#e8edf3",text:"#0f172a",textSub:"#334155",textMuted:"#64748b",textDim:"#94a3b8",textDimmer:"#cbd5e1",chipBg:"#e2e8f0",chipLeadBg:"#bfdbfe",inputBg:"#f8fafc",rowAlt:"#e8edf3" };
+const LIGHT_T = { pageBg:"#f1f5f9",cardBg:"#ffffff",headerBg:"#e2e8f0",border:"#cbd5e1",border2:"#e8edf3",text:"#0f172a",textSub:"#1e293b",textMuted:"#475569",textDim:"#64748b",textDimmer:"#94a3b8",chipBg:"#e2e8f0",chipLeadBg:"#bfdbfe",inputBg:"#f8fafc",rowAlt:"#e8edf3" };
 function makeRandT(n) {
-  const h = Math.round((n*137.508)%360);
-  return { pageBg:`hsl(${h},60%,8%)`,cardBg:`hsl(${h},40%,16%)`,headerBg:`hsl(${h},70%,5%)`,border:`hsl(${h},30%,35%)`,border2:`hsl(${h},40%,18%)`,text:`hsl(${h},20%,92%)`,textSub:`hsl(${h},15%,72%)`,textMuted:`hsl(${h},12%,56%)`,textDim:`hsl(${h},10%,44%)`,textDimmer:`hsl(${h},8%,32%)`,chipBg:`hsl(${h},40%,16%)`,chipLeadBg:`hsl(${h},50%,23%)`,inputBg:`hsl(${h},60%,8%)`,rowAlt:`hsl(${h},50%,13%)` };
+  const h = (x) => Math.round((n*137.508 + x) % 360);
+  return {
+    pageBg:`hsl(${h(0)},90%,10%)`,
+    cardBg:`hsl(${h(60)},85%,17%)`,
+    headerBg:`hsl(${h(120)},95%,7%)`,
+    border:`hsl(${h(180)},100%,55%)`,
+    border2:`hsl(${h(240)},80%,28%)`,
+    text:`hsl(${h(300)},100%,97%)`,
+    textSub:`hsl(${h(30)},100%,82%)`,
+    textMuted:`hsl(${h(90)},90%,70%)`,
+    textDim:`hsl(${h(150)},75%,55%)`,
+    textDimmer:`hsl(${h(210)},55%,40%)`,
+    chipBg:`hsl(${h(270)},75%,22%)`,
+    chipLeadBg:`hsl(${h(330)},85%,32%)`,
+    inputBg:`hsl(${h(15)},90%,8%)`,
+    rowAlt:`hsl(${h(75)},80%,16%)`
+  };
 }
 
 function BracketScorer() {
