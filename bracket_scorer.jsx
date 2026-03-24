@@ -18,6 +18,7 @@ export default function BracketScorer() {
   const [results, setResults] = useState(known_results);
   const [activeRound, setActiveRound] = useState("R1");
   const [expandedGame, setExpandedGame] = useState(null);
+  const [pickerTooltip, setPickerTooltip] = useState(null); // "gameId:team"
 
   const setWinner = (gameId, team) => {
     setResults(r => ({ ...r, [gameId]: r[gameId] === team ? null : team }));
@@ -160,21 +161,40 @@ export default function BracketScorer() {
                     const isWin = winner === team;
                     const isLoss = winner && winner !== team;
                     const cnt = (pickCount[team]||[]).length;
-                    const pickers = (pickCount[team]||[]).join(", ");
+                    const pickers = pickCount[team]||[];
+                    const tooltipKey = g.id+":"+team;
+                    const showPickers = pickerTooltip === tooltipKey;
                     return (
-                      <button key={team} onClick={() => setWinner(g.id, team)} title={pickers || "No picks"} style={{
-                        display:"flex",alignItems:"center",justifyContent:"space-between",
-                        padding:"8px 10px",borderRadius:7,cursor:"pointer",textAlign:"left",
-                        border: isWin ? "2px solid #22c55e" : isLoss ? "1px solid #1e293b" : "1px solid #475569",
-                        background: isWin ? "#052e16" : isLoss ? "#0f172a" : "#0f172a",
-                        color: isWin ? "#86efac" : isLoss ? "#334155" : "#e2e8f0",
-                        fontWeight: isWin ? 700 : 400,fontSize:13,
-                      }}>
-                        <span>{short(team)} {isWin ? "✓" : ""}</span>
-                        <span style={{fontSize:10,color:isWin?"#4ade80":isLoss?"#1e293b":"#64748b"}}>
-                          {cnt > 0 ? cnt+"/"+ people.length : ""}
-                        </span>
-                      </button>
+                      <div key={team}>
+                        <button onClick={() => setWinner(g.id, team)} style={{
+                          display:"flex",alignItems:"center",justifyContent:"space-between",
+                          width:"100%",padding:"8px 10px",borderRadius:7,cursor:"pointer",textAlign:"left",
+                          border: isWin ? "2px solid #22c55e" : isLoss ? "1px solid #1e293b" : "1px solid #475569",
+                          background: isWin ? "#052e16" : isLoss ? "#0f172a" : "#0f172a",
+                          color: isWin ? "#86efac" : isLoss ? "#334155" : "#e2e8f0",
+                          fontWeight: isWin ? 700 : 400,fontSize:13,
+                        }}>
+                          <span>{short(team)} {isWin ? "✓" : ""}</span>
+                          {cnt > 0 && (
+                            <span onClick={e => { e.stopPropagation(); setPickerTooltip(showPickers ? null : tooltipKey); }}
+                              style={{fontSize:10,color:isWin?"#4ade80":isLoss?"#1e293b":"#94a3b8",
+                                background:"#1e293b",borderRadius:4,padding:"2px 5px",cursor:"pointer"}}>
+                              {cnt}/{people.length}
+                            </span>
+                          )}
+                        </button>
+                        {showPickers && (
+                          <div style={{padding:"5px 10px 6px",background:"#0f172a",borderRadius:"0 0 6px 6px",
+                            display:"flex",flexWrap:"wrap",gap:4}}>
+                            {pickers.map(name => (
+                              <span key={name} style={{fontSize:10,padding:"2px 6px",borderRadius:4,
+                                background:"#1e3a5f",color:"#93c5fd",border:"1px solid #1e40af"}}>
+                                {name}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
