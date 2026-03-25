@@ -19,6 +19,17 @@ export default function BracketScorer() {
   const [activeRound, setActiveRound] = useState("R1");
   const [expandedGame, setExpandedGame] = useState(null);
 
+  const teamSeed = useMemo(() => {
+    const map = {};
+    games.filter(g => g.round === "R1").forEach(g => {
+      const parts = g.label.split(" vs ");
+      const s1 = parts[0].match(/\((\d+)\)/); const s2 = parts[1] && parts[1].match(/\((\d+)\)/);
+      if (s1 && g.t1) map[g.t1] = s1[1];
+      if (s2 && g.t2) map[g.t2] = s2[1];
+    });
+    return map;
+  }, [games]);
+
   const setWinner = (gameId, team) => {
     setResults(r => ({ ...r, [gameId]: r[gameId] === team ? null : team }));
   };
@@ -171,7 +182,7 @@ export default function BracketScorer() {
                           color: isWin ? "#86efac" : isLoss ? "#334155" : "#e2e8f0",
                           fontWeight: isWin ? 700 : 400,fontSize:13,
                         }}>
-                          <span>{short(team)} {isWin ? "✓" : ""}</span>
+                          <span>{short(team)}{teamSeed[team] ? <span style={{fontSize:9,color:"#64748b",marginLeft:3}}>{teamSeed[team]}</span> : null} {isWin ? "✓" : ""}</span>
                           {cnt > 0 && (
                             <span style={{fontSize:10,color:isWin?"#4ade80":isLoss?"#1e293b":"#94a3b8",
                               background:"#1e293b",borderRadius:4,padding:"2px 5px"}}>

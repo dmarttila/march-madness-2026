@@ -229,6 +229,16 @@ function BracketScorer() {
     });
 
   const gameById = useMemo(() => { const m = {}; games.forEach(g => { m[g.id] = g; }); return m; }, []);
+  const teamSeed = useMemo(() => {
+    const map = {};
+    games.filter(g => g.round === "R1").forEach(g => {
+      const parts = g.label.split(" vs ");
+      const s1 = parts[0].match(/\((\d+)\)/); const s2 = parts[1] && parts[1].match(/\((\d+)\)/);
+      if (s1 && g.t1) map[g.t1] = s1[1];
+      if (s2 && g.t2) map[g.t2] = s2[1];
+    });
+    return map;
+  }, [games]);
 
   // Two fixed colors for bracket comparison (work across all themes)
   const PC = ["#60a5fa","#f97316"]; // blue, orange
@@ -252,7 +262,7 @@ function BracketScorer() {
               textDecoration: lost ? "line-through" : "none",
               background: isPick && !won && !lost ? "#ffffff08" : "transparent",
             }}>
-              <span style={{flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginRight:2}}>{short(team)}</span>
+              <span style={{flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginRight:2}}>{short(team)}{teamSeed[team] ? <span style={{fontSize:9,color:"#64748b",marginLeft:3}}>{teamSeed[team]}</span> : null}</span>
               {multi && (
                 <span style={{display:"flex",gap:2,flexShrink:0}}>
                   {players.map((p,i) => (
@@ -697,7 +707,7 @@ function BracketScorer() {
                             fontWeight: (isActualWin || isSimWin || isManualWin) ? 700 : 400, fontSize:13,
                           }}>
                           <span style={{textDecoration: isDead ? "line-through" : "none"}}>
-                            {short(team)} {isActualWin ? "✓" : ""}
+                            {short(team)}{teamSeed[team] ? <span style={{fontSize:9,color:"#64748b",marginLeft:3}}>{teamSeed[team]}</span> : null} {isActualWin ? "✓" : ""}
                           </span>
                           <span style={{fontSize:10,color:isActualWin?"#4ade80":isSimWin?"#c084fc":isManualWin?"#4ade80":textMuted}}>
                             {cnt > 0 ? cnt+"/"+ people.length : ""}
