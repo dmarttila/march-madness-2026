@@ -672,56 +672,56 @@ function BracketScorer() {
                     const isDead = deadTeams.has(team);
                     const isDisabled = isDead || isLocked;
                     const cnt = (pickCount[team]||[]).length;
+                    const pickers = pickCount[team]||[];
                     return (
-                      <button key={team}
-                        onClick={isDisabled ? undefined : () => {
-                          if (isSimWin) {
-                            setSimOverrides(s => { const n = {...s}; delete n[g.id]; return n; });
-                            setSimulatingPlayer(null);
-                          } else {
-                            setSimOverrides(s => { const n = {...s}; delete n[g.id]; return n; });
-                            setWinner(g.id, team);
-                          }
-                        }}
-                        disabled={isDisabled}
-                        style={{
-                          display:"flex",alignItems:"center",justifyContent:"space-between",
-                          padding:"8px 10px",borderRadius:7,cursor:isDisabled?"default":"pointer",textAlign:"left",
-                          border: isActualWin ? "2px solid #22c55e" : isSimWin ? "2px solid #a855f7" : isManualWin ? "2px solid #22c55e" : "1px solid "+border2,
-                          background: isActualWin ? "#052e16" : isSimWin ? "#2d1b4e" : isManualWin ? "#052e16" : inputBg,
-                          color: isActualWin ? "#86efac" : isSimWin ? "#d8b4fe" : isManualWin ? "#86efac" : isDead ? textSub : text,
-                          fontWeight: (isActualWin || isSimWin || isManualWin) ? 700 : 400, fontSize:13,
-                        }}>
-                        <span style={{textDecoration: isDead ? "line-through" : "none"}}>
-                          {short(team)} {isActualWin ? "✓" : ""}
-                        </span>
-                        <span style={{fontSize:10,color:isActualWin?"#4ade80":isSimWin?"#c084fc":isManualWin?"#4ade80":textMuted}}>
-                          {cnt > 0 ? cnt+"/"+ people.length : ""}
-                        </span>
-                      </button>
+                      <div key={team}>
+                        <button
+                          onClick={isDisabled ? undefined : () => {
+                            if (isSimWin) {
+                              setSimOverrides(s => { const n = {...s}; delete n[g.id]; return n; });
+                              setSimulatingPlayer(null);
+                            } else {
+                              setSimOverrides(s => { const n = {...s}; delete n[g.id]; return n; });
+                              setWinner(g.id, team);
+                            }
+                          }}
+                          disabled={isDisabled}
+                          style={{
+                            display:"flex",alignItems:"center",justifyContent:"space-between",
+                            width:"100%",padding:"8px 10px",
+                            borderRadius: expanded && cnt > 0 ? "7px 7px 0 0" : 7,
+                            cursor:isDisabled?"default":"pointer",textAlign:"left",
+                            border: isActualWin ? "2px solid #22c55e" : isSimWin ? "2px solid #a855f7" : isManualWin ? "2px solid #22c55e" : "1px solid "+border2,
+                            background: isActualWin ? "#052e16" : isSimWin ? "#2d1b4e" : isManualWin ? "#052e16" : inputBg,
+                            color: isActualWin ? "#86efac" : isSimWin ? "#d8b4fe" : isManualWin ? "#86efac" : isDead ? textSub : text,
+                            fontWeight: (isActualWin || isSimWin || isManualWin) ? 700 : 400, fontSize:13,
+                          }}>
+                          <span style={{textDecoration: isDead ? "line-through" : "none"}}>
+                            {short(team)} {isActualWin ? "✓" : ""}
+                          </span>
+                          <span style={{fontSize:10,color:isActualWin?"#4ade80":isSimWin?"#c084fc":isManualWin?"#4ade80":textMuted}}>
+                            {cnt > 0 ? cnt+"/"+ people.length : ""}
+                          </span>
+                        </button>
+                        {expanded && cnt > 0 && (
+                          <div style={{padding:"5px 10px 6px",
+                            border: isActualWin ? "2px solid #22c55e" : isSimWin ? "2px solid #a855f7" : isManualWin ? "2px solid #22c55e" : "1px solid "+border2,
+                            borderTop:"none",borderRadius:"0 0 7px 7px",background:pageBg,
+                            display:"flex",flexWrap:"wrap",gap:4}}>
+                            {pickers.map(name => (
+                              <span key={name} style={{fontSize:10,padding:"2px 6px",borderRadius:4,
+                                background: isActualWin||isManualWin ? "#052e16" : isSimWin ? "#2d1b4e" : chipBg,
+                                color: isActualWin||isManualWin ? "#86efac" : isSimWin ? "#d8b4fe" : isDead ? "#fca5a5" : "#93c5fd",
+                                border: "1px solid " + (isActualWin||isManualWin ? "#166534" : isSimWin ? "#6b21a8" : isDead ? "#7f1d1d" : "#1e40af")}}>
+                                {name}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
-
-                {expanded && (
-                  <div style={{marginTop:8,padding:"8px",background:pageBg,borderRadius:6,display:"flex",flexWrap:"wrap",gap:4}}>
-                    {people.map(p => {
-                      const pick = g.picks[p];
-                      const correct = winner && pick === winner;
-                      const wrong = winner && pick && pick !== winner;
-                      return (
-                        <span key={p} style={{
-                          fontSize:10,padding:"3px 6px",borderRadius:4,
-                          background: correct ? "#052e16" : wrong ? "#2d0a0a" : chipBg,
-                          color: correct ? "#86efac" : wrong ? "#fca5a5" : textMuted,
-                          border: "1px solid " + (correct ? "#166534" : wrong ? "#7f1d1d" : border)
-                        }}>
-                          {names[p].split(" ")[0]}: {pick ? short(pick) : "?"} {correct?"✓":wrong?"✗":""}
-                        </span>
-                      );
-                    })}
-                  </div>
-                )}
               </div>
             </div>
           );
