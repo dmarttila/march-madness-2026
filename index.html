@@ -262,7 +262,7 @@ function BracketScorer() {
               textDecoration: lost ? "line-through" : "none",
               background: isPick && !won && !lost ? "#ffffff08" : "transparent",
             }}>
-              <span style={{flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginRight:2}}>{short(team)}{teamSeed[team] ? <span style={{fontSize:9,color:"#64748b",marginLeft:3}}>{teamSeed[team]}</span> : null}</span>
+              <span style={{flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginRight:2}}>{short(team)}{teamSeed[team] ? <span style={{color:"#64748b",marginLeft:4}}>{teamSeed[team]}</span> : null}</span>
               {multi && (
                 <span style={{display:"flex",gap:2,flexShrink:0}}>
                   {players.map((p,i) => (
@@ -707,7 +707,7 @@ function BracketScorer() {
                             fontWeight: (isActualWin || isSimWin || isManualWin) ? 700 : 400, fontSize:13,
                           }}>
                           <span style={{textDecoration: isDead ? "line-through" : "none"}}>
-                            {short(team)}{teamSeed[team] ? <span style={{fontSize:9,color:"#64748b",marginLeft:3}}>{teamSeed[team]}</span> : null} {isActualWin ? "✓" : ""}
+                            {short(team)}{teamSeed[team] ? <span style={{color:"#64748b",marginLeft:4}}>{teamSeed[team]}</span> : null} {isActualWin ? "✓" : ""}
                           </span>
                           <span style={{fontSize:10,color:isActualWin?"#4ade80":isSimWin?"#c084fc":isManualWin?"#4ade80":textMuted}}>
                             {cnt > 0 ? cnt+"/"+ people.length : ""}

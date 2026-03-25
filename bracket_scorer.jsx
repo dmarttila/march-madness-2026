@@ -182,7 +182,7 @@ export default function BracketScorer() {
                           color: isWin ? "#86efac" : isLoss ? "#334155" : "#e2e8f0",
                           fontWeight: isWin ? 700 : 400,fontSize:13,
                         }}>
-                          <span>{short(team)}{teamSeed[team] ? <span style={{fontSize:9,color:"#64748b",marginLeft:3}}>{teamSeed[team]}</span> : null} {isWin ? "✓" : ""}</span>
+                          <span>{short(team)}{teamSeed[team] ? <span style={{color:"#64748b",marginLeft:4}}>{teamSeed[team]}</span> : null} {isWin ? "✓" : ""}</span>
                           {cnt > 0 && (
                             <span style={{fontSize:10,color:isWin?"#4ade80":isLoss?"#1e293b":"#94a3b8",
                               background:"#1e293b",borderRadius:4,padding:"2px 5px"}}>
