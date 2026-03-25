@@ -18,7 +18,6 @@ export default function BracketScorer() {
   const [results, setResults] = useState(known_results);
   const [activeRound, setActiveRound] = useState("R1");
   const [expandedGame, setExpandedGame] = useState(null);
-  const [pickerTooltip, setPickerTooltip] = useState(null); // "gameId:team"
 
   const setWinner = (gameId, team) => {
     setResults(r => ({ ...r, [gameId]: r[gameId] === team ? null : team }));
@@ -162,13 +161,11 @@ export default function BracketScorer() {
                     const isLoss = winner && winner !== team;
                     const cnt = (pickCount[team]||[]).length;
                     const pickers = pickCount[team]||[];
-                    const tooltipKey = g.id+":"+team;
-                    const showPickers = pickerTooltip === tooltipKey;
                     return (
                       <div key={team}>
                         <button onClick={() => setWinner(g.id, team)} style={{
                           display:"flex",alignItems:"center",justifyContent:"space-between",
-                          width:"100%",padding:"8px 10px",borderRadius:7,cursor:"pointer",textAlign:"left",
+                          width:"100%",padding:"8px 10px",borderRadius: expanded ? "7px 7px 0 0" : 7,cursor:"pointer",textAlign:"left",
                           border: isWin ? "2px solid #22c55e" : isLoss ? "1px solid #1e293b" : "1px solid #475569",
                           background: isWin ? "#052e16" : isLoss ? "#0f172a" : "#0f172a",
                           color: isWin ? "#86efac" : isLoss ? "#334155" : "#e2e8f0",
@@ -176,48 +173,35 @@ export default function BracketScorer() {
                         }}>
                           <span>{short(team)} {isWin ? "✓" : ""}</span>
                           {cnt > 0 && (
-                            <span onClick={e => { e.stopPropagation(); setPickerTooltip(showPickers ? null : tooltipKey); }}
-                              style={{fontSize:10,color:isWin?"#4ade80":isLoss?"#1e293b":"#94a3b8",
-                                background:"#1e293b",borderRadius:4,padding:"2px 5px",cursor:"pointer"}}>
+                            <span style={{fontSize:10,color:isWin?"#4ade80":isLoss?"#1e293b":"#94a3b8",
+                              background:"#1e293b",borderRadius:4,padding:"2px 5px"}}>
                               {cnt}/{people.length}
                             </span>
                           )}
                         </button>
-                        {showPickers && (
-                          <div style={{padding:"5px 10px 6px",background:"#0f172a",borderRadius:"0 0 6px 6px",
+                        {expanded && cnt > 0 && (
+                          <div style={{padding:"5px 10px 6px",
+                            border: isWin ? "2px solid #22c55e" : isLoss ? "1px solid #1e293b" : "1px solid #475569",
+                            borderTop:"none",borderRadius:"0 0 7px 7px",background:"#0a0f1a",
                             display:"flex",flexWrap:"wrap",gap:4}}>
-                            {pickers.map(name => (
-                              <span key={name} style={{fontSize:10,padding:"2px 6px",borderRadius:4,
-                                background:"#1e3a5f",color:"#93c5fd",border:"1px solid #1e40af"}}>
-                                {name}
-                              </span>
-                            ))}
+                            {pickers.map(name => {
+                              const correct = winner === team;
+                              const wrong = winner && winner !== team;
+                              return (
+                                <span key={name} style={{fontSize:10,padding:"2px 6px",borderRadius:4,
+                                  background: correct ? "#052e16" : wrong ? "#2d0a0a" : "#1e293b",
+                                  color: correct ? "#86efac" : wrong ? "#fca5a5" : "#93c5fd",
+                                  border: "1px solid " + (correct ? "#166534" : wrong ? "#7f1d1d" : "#1e40af")}}>
+                                  {name}
+                                </span>
+                              );
+                            })}
                           </div>
                         )}
                       </div>
                     );
                   })}
                 </div>
-
-                {expanded && (
-                  <div style={{marginTop:8,padding:"8px",background:pageBg,borderRadius:6,display:"flex",flexWrap:"wrap",gap:4}}>
-                    {people.map(p => {
-                      const pick = g.picks[p];
-                      const correct = winner && pick === winner;
-                      const wrong = winner && pick && pick !== winner;
-                      return (
-                        <span key={p} style={{
-                          fontSize:10,padding:"3px 6px",borderRadius:4,
-                          background: correct ? "#052e16" : wrong ? "#2d0a0a" : "#1e293b",
-                          color: correct ? "#86efac" : wrong ? "#fca5a5" : "#64748b",
-                          border: "1px solid " + (correct ? "#166534" : wrong ? "#7f1d1d" : "#334155")
-                        }}>
-                          {names[p].split(" ")[0]}: {pick ? short(pick) : "?"} {correct?"✓":wrong?"✗":""}
-                        </span>
-                      );
-                    })}
-                  </div>
-                )}
               </div>
             </div>
           );
