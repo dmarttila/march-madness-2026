@@ -107,7 +107,7 @@ function BracketScorer() {
 
   const [results, setResults] = useState(known_results);
   const [activeRound, setActiveRound] = useState("S16");
-  const [expandedGame, setExpandedGame] = useState(null);
+  const [expandedGames, setExpandedGames] = useState(new Set());
   const [mode, setMode] = useState("time"); // "time" | "region" | "bracket"
   const [hideCompleted, setHideCompleted] = useState(false);
   const [simulatingPlayer, setSimulatingPlayer] = useState(null);
@@ -634,7 +634,7 @@ function BracketScorer() {
           const winner = effectiveResults[g.id];
           const isLocked = !!known_results[g.id];
           const rc = REGION_COLORS[g.region] || "#818cf8";
-          const expanded = expandedGame === g.id;
+          const expanded = expandedGames.has(g.id);
           const pickCount = {};
           people.forEach(p => {
             const pk = g.picks[p];
@@ -658,7 +658,7 @@ function BracketScorer() {
                 <span style={{fontSize:10,fontWeight:700,color:rc,letterSpacing:"0.5px",textTransform:"uppercase"}}>
                   {g.region ? REGION_LABELS[g.region] : ""} {g.pts > 1 ? "· "+g.pts+"pts" : "· 1pt"}
                 </span>
-                <button onClick={() => setExpandedGame(expanded ? null : g.id)}
+                <button onClick={() => setExpandedGames(s => { const n = new Set(s); expanded ? n.delete(g.id) : n.add(g.id); return n; })}
                   style={{background:"none",border:"none",color:textDim,cursor:"pointer",fontSize:10,padding:0}}>
                   {expanded ? "▲" : "▼"} picks
                 </button>
