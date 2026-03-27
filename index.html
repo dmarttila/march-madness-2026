@@ -430,12 +430,17 @@ function BracketScorer() {
               color: active ? text : textMuted,
               fontWeight: active ? 700 : 400,fontSize:13,
               borderBottom: active ? "3px solid #3b82f6" : "3px solid transparent",
-              whiteSpace:"nowrap"
+              whiteSpace:"nowrap",display:"flex",flexDirection:"column",alignItems:"flex-start"
             }}>
-              {ROUND_LABELS[r]}
-              <span style={{marginLeft:5,fontSize:10,
-                color: done===rg.length&&done>0 ? "#22c55e" : active ? textSub : textDimmer}}>
-                {done}/{rg.length}
+              <span>
+                {ROUND_LABELS[r]}
+                <span style={{marginLeft:5,fontSize:10,
+                  color: done===rg.length&&done>0 ? "#22c55e" : active ? textSub : textDimmer}}>
+                  {done}/{rg.length}
+                </span>
+              </span>
+              <span style={{fontSize:9,color:active?textDim:textDimmer,marginTop:1}}>
+                {ROUND_PTS[r] === 1 ? "1 pt per game" : ROUND_PTS[r]+" pts"}
               </span>
             </button>
           );
