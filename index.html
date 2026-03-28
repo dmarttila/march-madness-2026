@@ -145,6 +145,8 @@ function BracketScorer() {
   const [tonieSpinning, setTonieSpinning] = useState(false);
   const [tonieHidden, setTonieHidden] = useState(false);
   const [tonieKey, setTonieKey] = useState(0);
+  const [hiddenPeople, setHiddenPeople] = useState(new Set());
+  const [spinningPeople, setSpinningPeople] = useState(new Set());
 
   // Bouncing people avatars
   const personRefsMap = useRef({});
@@ -164,7 +166,7 @@ function BracketScorer() {
       if (tonieRafRef.current) cancelAnimationFrame(tonieRafRef.current);
       return;
     }
-    const SIZE = 270;
+    const SIZE = 200;
     const step = () => {
       const pos = toniePosRef.current;
       const vel = tonieVelRef.current;
@@ -239,15 +241,31 @@ function BracketScorer() {
       setTonieHidden(true);
       setTonieSpinning(false);
     }, 700);
+  };
+
+  const handlePersonTap = (p) => {
+    if (spinningPeople.has(p) || hiddenPeople.has(p)) return;
+    setSpinningPeople(prev => new Set([...prev, p]));
     setTimeout(() => {
-      toniePosRef.current = {
-        x: Math.random() * (window.innerWidth - 100) + 50,
-        y: Math.random() * (window.innerHeight - 100) + 50,
-      };
+      setSpinningPeople(prev => { const s = new Set(prev); s.delete(p); return s; });
+      setHiddenPeople(prev => new Set([...prev, p]));
+    }, 700);
+  };
+
+  // When all people + Tonie are gone, bring everyone back after 2s
+  useEffect(() => {
+    if (colorScheme !== "tonie") return;
+    if (!tonieHidden) return;
+    if (hiddenPeople.size < people.length) return;
+    const timer = setTimeout(() => {
+      setHiddenPeople(new Set());
+      setSpinningPeople(new Set());
       setTonieHidden(false);
       setTonieKey(k => k + 1);
-    }, 2700);
-  };
+      personStateRef.current = null; // reset positions
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [tonieHidden, hiddenPeople, colorScheme]);
 
   useEffect(() => {
     const p = new URLSearchParams();
@@ -936,25 +954,30 @@ function BracketScorer() {
       </div>}
       {/* Bouncing people avatars */}
       {colorScheme === "tonie" && people.map(p => {
+        if (hiddenPeople.has(p)) return null;
         const isOut = !canWin[p];
         const isLeading = rankNums[ranked.indexOf(p)] === 1;
+        const isSpinning = spinningPeople.has(p);
         return (
           <div key={"avatar-"+p} ref={el => { personRefsMap.current[p] = el; }}
+            onClick={() => handlePersonTap(p)}
             style={{position:"fixed",left:(personStateRef.current?.[p]?.x??50)+"px",
               top:(personStateRef.current?.[p]?.y??50)+"px",
-              width:70,height:70,zIndex:9997,pointerEvents:"none",userSelect:"none"}}>
+              width:70,height:70,zIndex:9997,cursor:"pointer",userSelect:"none",
+              pointerEvents: isSpinning ? "none" : "auto"}}>
             {isLeading && (
-              <span style={{position:"absolute",top:-22,left:"50%",transform:"translateX(-50%)",
-                fontSize:20,zIndex:1,filter:"drop-shadow(0 1px 2px rgba(0,0,0,0.5))"}}>👑</span>
+              <span style={{position:"absolute",top:-28,left:"50%",transform:"translateX(-50%)",
+                fontSize:28,zIndex:1,filter:"drop-shadow(0 1px 3px rgba(0,0,0,0.6))"}}>👑</span>
             )}
             {isOut && (
-              <span style={{position:"absolute",top:-22,left:"50%",transform:"translateX(-50%)",
-                fontSize:20,zIndex:1,animation:"poop-float 1.4s ease-in-out infinite"}}>💩</span>
+              <span style={{position:"absolute",top:-28,left:"50%",transform:"translateX(-50%)",
+                fontSize:28,zIndex:1,animation:"poop-float 1.4s ease-in-out infinite"}}>💩</span>
             )}
             <img src={"./headshots/"+names[p].split(" ")[0]+".jpg"} alt={names[p].split(" ")[0]}
               style={{width:70,height:70,borderRadius:"50%",objectFit:"cover",
                 border:"3px solid white",display:"block",
-                boxShadow:"0 2px 12px rgba(0,0,0,0.5)"}} />
+                boxShadow:"0 2px 12px rgba(0,0,0,0.5)",
+                animation: isSpinning ? "tonie-spin-away 0.7s forwards ease-in" : "none"}} />
           </div>
         );
       })}
@@ -971,7 +994,9 @@ function BracketScorer() {
             position:"fixed",
             left: toniePosRef.current.x + "px",
             top:  toniePosRef.current.y + "px",
-            width:200, height:"auto",
+            width:200, height:200,
+            borderRadius:"50%",
+            objectFit:"cover",
             cursor:"pointer",
             zIndex:9999,
             animation: tonieSpinning
