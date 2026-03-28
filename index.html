@@ -596,6 +596,11 @@ function BracketScorer() {
               border: isSim ? "2px solid #a855f7" : lead ? "1px solid #3b82f6" : "1px solid "+border,
               borderRadius:8,padding:"8px 12px",textAlign:"center",verticalAlign:"top",
               boxShadow: isSim ? "0 0 12px rgba(168,85,247,0.4)" : lead ? "0 0 10px rgba(59,130,246,0.25)" : "none"}}>
+              {lead && (
+                <span style={{position:"absolute",top:-18,left:"50%",transform:"translateX(-50%)",
+                  fontSize:22,pointerEvents:"none",zIndex:10,
+                  filter:"drop-shadow(0 1px 3px rgba(0,0,0,0.5))"}}>👑</span>
+              )}
               {colorScheme==="tonie" && !canWin[p] && (
                 <span style={{position:"absolute",top:-14,left:"50%",fontSize:20,
                   animation:"poop-float 1.4s ease-in-out infinite",
