@@ -144,7 +144,7 @@ function BracketScorer() {
   const [simulatingPlayer, setSimulatingPlayer] = useState(null);
   const [simOverrides, setSimOverrides] = useState({});
   const [bracketPlayers, setBracketPlayers] = useState([people[0]]);
-  const [colorScheme, setColorScheme] = useState(_up.get("color") || "dark");
+  const [colorScheme, setColorScheme] = useState(_up.get("color") || "tonie");
   const [randomSeed, setRandomSeed] = useState(1);
 
   // Tonie mode state
@@ -301,7 +301,7 @@ function BracketScorer() {
     if (hideCompleted) p.set("hide", "1");
     if (mode !== "time") p.set("mode", mode);
     if (expandedGames.size > 0) p.set("picks", [...expandedGames].join(","));
-    if (colorScheme !== "dark") p.set("color", colorScheme);
+    if (colorScheme !== "tonie") p.set("color", colorScheme);
     const qs = p.toString();
     window.history.replaceState(null, "", qs ? "?" + qs : window.location.pathname);
   }, [activeRound, hideCompleted, mode, expandedGames, colorScheme]);
