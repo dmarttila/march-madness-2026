@@ -50,6 +50,7 @@ const PERSON_COLOR_LIST = ["#60a5fa","#f97316","#a78bfa","#34d399","#f43f5e","#f
 const REGION_LABELS = {east:"East",south:"South",west:"West",midwest:"Midwest"};
 const CHAMP_PICKS = {doug:"Michigan",blair:"Duke",emma:"Arizona",grace:"Michigan",jeff:"Michigan",leslie:"UConn",max:"Illinois",phyllis:"Arizona",rosie:"Michigan St.",taylor:"Florida",lori:"Arizona"};
 
+const firstName = n => { const p = n.split(" "); return p.length > 1 && /^[a-z]/.test(p[1]) ? n : p[0]; };
 const short = t => t.length > 11 ? t.replace("Michigan St.","Mich. St.").replace("St. John's","St. John's").replace("Cal Baptist","Cal Bap.").replace("Tenn. State","Tenn. St.").replace("Texas Tech","Tex. Tech").replace("High Point","Hi. Point").replace("Iowa St.","Iowa St.") : t;
 
 // Game times for Round of 32 (ET). sortKey = chronological order.
@@ -607,7 +608,7 @@ function BracketScorer() {
                   pointerEvents:"none",zIndex:10}}>💩</span>
               )}
               <div style={{fontSize:10,color:isSim?"#c084fc":lead?leadRank:textMuted}}>{medal} #{rank}</div>
-              <div style={{fontSize:12,fontWeight:600,color:isSim?"#e2e8f0":lead?leadText:textSub}}>{names[p].split(" ")[0]}</div>
+              <div style={{fontSize:12,fontWeight:600,color:isSim?"#e2e8f0":lead?leadText:textSub}}>{firstName(names[p])}</div>
               <div style={{fontSize:20,fontWeight:700,color:isSim?"#c084fc":lead?leadScore:textMuted,lineHeight:"1.1"}}>{scores[p].total}</div>
               <div style={{fontSize:9,color:textSub}}>max {maxPossible[p]}</div>
               <div style={{fontSize:9,marginTop:3,borderTop:"1px solid "+border2,paddingTop:3,
@@ -705,7 +706,7 @@ function BracketScorer() {
                   background: sel ? PC[idx] : chipBg,
                   color: sel ? "#fff" : textMuted,
                 }}>
-                  {names[p].split(" ")[0]}
+                  {firstName(names[p])}
                 </button>
               );
             })}
@@ -718,7 +719,7 @@ function BracketScorer() {
           <div style={{marginBottom:14,display:"flex",gap:20,flexWrap:"wrap"}}>
             {bracketPlayers.map((p,i) => (
               <div key={p} style={{fontSize:13,color:textMuted}}>
-                <span style={{color:PC[i],fontWeight:700}}>{names[p].split(" ")[0]}</span>
+                <span style={{color:PC[i],fontWeight:700}}>{firstName(names[p])}</span>
                 &nbsp;·&nbsp;
                 <span style={{color:PC[i],fontWeight:700}}>{scores[p].total} pts</span>
                 &nbsp;·&nbsp;max {maxPossible[p]}&nbsp;·&nbsp;
@@ -845,7 +846,7 @@ function BracketScorer() {
           const pickCount = {};
           people.forEach(p => {
             const pk = g.picks[p];
-            if (pk) { if (!pickCount[pk]) pickCount[pk] = []; pickCount[pk].push(names[p].split(" ")[0]); }
+            if (pk) { if (!pickCount[pk]) pickCount[pk] = []; pickCount[pk].push(firstName(names[p])); }
           });
           // Confirmed contestants: R1 uses t1/t2; R2+ derives from feeder results
           const feeders = FEEDERS[g.id];
@@ -1012,7 +1013,7 @@ function BracketScorer() {
               <span style={{position:"absolute",top:-28,left:"50%",transform:"translateX(-50%)",
                 fontSize:28,zIndex:1,animation:"poop-float 1.4s ease-in-out infinite"}}>💩</span>
             )}
-            <img src={"./headshots/"+names[p].split(" ")[0]+".jpg"} alt={names[p].split(" ")[0]}
+            <img src={"./headshots/"+names[p].split(" ")[0]+".jpg"} alt={firstName(names[p])}
               style={{width:size,height:size,borderRadius:"50%",objectFit:"cover",display:"block",
                 border: isSelected ? `4px solid ${personColor}` : "3px solid white",
                 boxShadow: isSelected
