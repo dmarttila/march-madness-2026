@@ -152,7 +152,7 @@ function BracketScorer() {
       if (tonieRafRef.current) cancelAnimationFrame(tonieRafRef.current);
       return;
     }
-    const SIZE = 200;
+    const SIZE = 270;
     const step = () => {
       const pos = toniePosRef.current;
       const vel = tonieVelRef.current;
@@ -890,7 +890,7 @@ function BracketScorer() {
             position:"fixed",
             left: toniePosRef.current.x + "px",
             top:  toniePosRef.current.y + "px",
-            width:200, height:200,
+            width:200, height:"auto",
             cursor:"pointer",
             zIndex:9999,
             animation: tonieSpinning
