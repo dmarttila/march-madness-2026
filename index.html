@@ -23,6 +23,15 @@
       65%  { transform: rotate(15deg) scale(1.25); opacity: 1; }
       100% { transform: rotate(0deg) scale(1); opacity: 1; }
     }
+    @keyframes celebration-pop {
+      0%   { transform: translate(-50%,-50%) scale(0) rotate(-15deg); opacity:0; }
+      55%  { transform: translate(-50%,-50%) scale(1.4) rotate(6deg);  opacity:1; }
+      100% { transform: translate(-50%,-50%) scale(1.1) rotate(0deg);  opacity:1; }
+    }
+    @keyframes confetti-fly {
+      0%   { transform: translateY(0)     rotate(0deg)   scale(1);   opacity:1; }
+      100% { transform: translateY(110vh) rotate(540deg) scale(0.4); opacity:0; }
+    }
   </style>
 </head>
 <body>
@@ -37,6 +46,7 @@ const ROUND_ORDER = ["R1","R2","S16","E8","FF","CHAMP"];
 const ROUND_LABELS = {R1:"Round of 64",R2:"Round of 32",S16:"Sweet 16",E8:"Elite 8",FF:"Final Four",CHAMP:"Championship"};
 const ROUND_PTS = {R1:1,R2:2,S16:4,E8:8,FF:16,CHAMP:32};
 const REGION_COLORS = {east:"#818cf8",south:"#f87171",west:"#fb923c",midwest:"#4ade80"};
+const PERSON_COLOR_LIST = ["#60a5fa","#f97316","#a78bfa","#34d399","#f43f5e","#facc15","#22d3ee","#fb923c","#86efac","#c084fc","#f9a8d4"];
 const REGION_LABELS = {east:"East",south:"South",west:"West",midwest:"Midwest"};
 const CHAMP_PICKS = {doug:"Michigan",blair:"Duke",emma:"Arizona",grace:"Michigan",jeff:"Michigan",leslie:"UConn",max:"Illinois",phyllis:"Arizona",rosie:"Michigan St.",taylor:"Florida",lori:"Arizona"};
 
@@ -147,6 +157,7 @@ function BracketScorer() {
   const [tonieKey, setTonieKey] = useState(0);
   const [hiddenPeople, setHiddenPeople] = useState(new Set());
   const [spinningPeople, setSpinningPeople] = useState(new Set());
+  const [showCelebration, setShowCelebration] = useState(false);
 
   // Bouncing people avatars
   const personRefsMap = useRef({});
@@ -245,6 +256,7 @@ function BracketScorer() {
 
   const handlePersonTap = (p) => {
     if (spinningPeople.has(p) || hiddenPeople.has(p)) return;
+    setRandomSeed(n => n + 1);
     setSpinningPeople(prev => new Set([...prev, p]));
     setTimeout(() => {
       setSpinningPeople(prev => { const s = new Set(prev); s.delete(p); return s; });
@@ -257,8 +269,8 @@ function BracketScorer() {
     if (colorScheme !== "tonie") return;
     if (!tonieHidden) return;
     if (hiddenPeople.size < people.length) return;
+    setShowCelebration(true);
     const timer = setTimeout(() => {
-      // Pre-populate fresh positions so the running RAF loop picks them up immediately
       const freshState = {};
       const SIZE = 70;
       people.forEach((p, i) => {
@@ -274,6 +286,7 @@ function BracketScorer() {
         };
       });
       personStateRef.current = freshState;
+      setShowCelebration(false);
       setHiddenPeople(new Set());
       setSpinningPeople(new Set());
       setTonieHidden(false);
@@ -563,6 +576,7 @@ function BracketScorer() {
           const isSim = simulatingPlayer === p;
           return (
             <span key={p} onClick={() => {
+              if (colorScheme === "tonie") setRandomSeed(n => n + 1);
               if (isSim) {
                 setSimulatingPlayer(null);
                 setSimOverrides({});
@@ -968,18 +982,23 @@ function BracketScorer() {
         </div>
       </div>}
       {/* Bouncing people avatars */}
-      {colorScheme === "tonie" && people.map(p => {
+      {colorScheme === "tonie" && people.map((p, pi) => {
         if (hiddenPeople.has(p)) return null;
         const isOut = !canWin[p];
         const isLeading = rankNums[ranked.indexOf(p)] === 1;
         const isSpinning = spinningPeople.has(p);
+        const isSelected = simulatingPlayer === p;
+        const personColor = PERSON_COLOR_LIST[pi % PERSON_COLOR_LIST.length];
+        const size = isSelected ? 110 : 70;
         return (
           <div key={"avatar-"+p} ref={el => { personRefsMap.current[p] = el; }}
             onClick={() => handlePersonTap(p)}
             style={{position:"fixed",left:(personStateRef.current?.[p]?.x??50)+"px",
               top:(personStateRef.current?.[p]?.y??50)+"px",
-              width:70,height:70,zIndex:9997,cursor:"pointer",userSelect:"none",
-              pointerEvents: isSpinning ? "none" : "auto"}}>
+              width:size,height:size,zIndex:isSelected?9998:9997,
+              cursor:"pointer",userSelect:"none",
+              pointerEvents: isSpinning ? "none" : "auto",
+              transition:"width 0.3s,height 0.3s"}}>
             {isLeading && (
               <span style={{position:"absolute",top:-28,left:"50%",transform:"translateX(-50%)",
                 fontSize:28,zIndex:1,filter:"drop-shadow(0 1px 3px rgba(0,0,0,0.6))"}}>👑</span>
@@ -989,13 +1008,37 @@ function BracketScorer() {
                 fontSize:28,zIndex:1,animation:"poop-float 1.4s ease-in-out infinite"}}>💩</span>
             )}
             <img src={"./headshots/"+names[p].split(" ")[0]+".jpg"} alt={names[p].split(" ")[0]}
-              style={{width:70,height:70,borderRadius:"50%",objectFit:"cover",
-                border:"3px solid white",display:"block",
-                boxShadow:"0 2px 12px rgba(0,0,0,0.5)",
+              style={{width:size,height:size,borderRadius:"50%",objectFit:"cover",display:"block",
+                border: isSelected ? `4px solid ${personColor}` : "3px solid white",
+                boxShadow: isSelected
+                  ? `0 0 0 3px ${personColor}44, 0 4px 20px ${personColor}88`
+                  : "0 2px 12px rgba(0,0,0,0.5)",
+                filter: isSelected ? `drop-shadow(0 0 8px ${personColor})` : "none",
+                transition:"width 0.3s,height 0.3s,border 0.3s,box-shadow 0.3s",
                 animation: isSpinning ? "tonie-spin-away 0.7s forwards ease-in" : "none"}} />
           </div>
         );
       })}
+
+      {/* Celebration overlay */}
+      {colorScheme === "tonie" && showCelebration && (
+        <div style={{position:"fixed",inset:0,zIndex:99998,pointerEvents:"none",overflow:"hidden"}}>
+          <div style={{position:"absolute",top:"42%",left:"50%",fontSize:72,textAlign:"center",
+            lineHeight:1.2,animation:"celebration-pop 0.5s ease-out forwards"}}>
+            🎉🏆🎉<br/><span style={{fontSize:32,fontWeight:900,color:"#fff",
+              textShadow:"0 2px 16px rgba(0,0,0,0.8)"}}>EVERYONE'S OUT!</span>
+          </div>
+          {["🎊","✨","🌟","🎈","🎉","💫","⭐","🎊","✨","🌟","🎈","🎉","💫","⭐","🎊","✨","🌟","🎈"].map((e,i) => (
+            <span key={i} style={{
+              position:"absolute",
+              left:`${(i*5+7)%94}%`,
+              top:-40,
+              fontSize:20+(i%4)*10,
+              animation:`confetti-fly ${1.2+(i%5)*0.25}s ${i*0.08}s ease-in forwards`,
+            }}>{e}</span>
+          ))}
+        </div>
+      )}
 
       {/* Bouncing Tonie */}
       {colorScheme === "tonie" && !tonieHidden && (
