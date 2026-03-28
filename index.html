@@ -258,11 +258,26 @@ function BracketScorer() {
     if (!tonieHidden) return;
     if (hiddenPeople.size < people.length) return;
     const timer = setTimeout(() => {
+      // Pre-populate fresh positions so the running RAF loop picks them up immediately
+      const freshState = {};
+      const SIZE = 70;
+      people.forEach((p, i) => {
+        const W = window.innerWidth;
+        const H = window.innerHeight;
+        const angle = (i / people.length) * Math.PI * 2 + Math.random() * 0.5;
+        const speed = 0.8 + Math.random() * 1.2;
+        freshState[p] = {
+          x: W * 0.1 + Math.random() * (W * 0.8 - SIZE),
+          y: H * 0.1 + Math.random() * (H * 0.8 - SIZE),
+          dx: Math.cos(angle) * speed,
+          dy: Math.sin(angle) * speed,
+        };
+      });
+      personStateRef.current = freshState;
       setHiddenPeople(new Set());
       setSpinningPeople(new Set());
       setTonieHidden(false);
       setTonieKey(k => k + 1);
-      personStateRef.current = null; // reset positions
     }, 2000);
     return () => clearTimeout(timer);
   }, [tonieHidden, hiddenPeople, colorScheme]);
@@ -997,6 +1012,7 @@ function BracketScorer() {
             width:200, height:200,
             borderRadius:"50%",
             objectFit:"cover",
+            objectPosition:"center 20%",
             cursor:"pointer",
             zIndex:9999,
             animation: tonieSpinning
