@@ -146,6 +146,11 @@ function BracketScorer() {
   const [tonieHidden, setTonieHidden] = useState(false);
   const [tonieKey, setTonieKey] = useState(0);
 
+  // Bouncing people avatars
+  const personRefsMap = useRef({});
+  const personStateRef = useRef(null);
+  const personRafRef = useRef(null);
+
   // Auto-cycle colors every 10 seconds in tonie mode
   useEffect(() => {
     if (colorScheme !== "tonie") return;
@@ -181,6 +186,50 @@ function BracketScorer() {
     };
     tonieRafRef.current = requestAnimationFrame(step);
     return () => { if (tonieRafRef.current) cancelAnimationFrame(tonieRafRef.current); };
+  }, [colorScheme]);
+
+  // Bouncing people avatars animation
+  useEffect(() => {
+    if (colorScheme !== "tonie") {
+      if (personRafRef.current) cancelAnimationFrame(personRafRef.current);
+      personStateRef.current = null;
+      return;
+    }
+    const SIZE = 70;
+    personStateRef.current = {};
+    people.forEach((p, i) => {
+      const W = window.innerWidth;
+      const H = window.innerHeight;
+      const angle = (i / people.length) * Math.PI * 2 + Math.random() * 0.5;
+      const speed = 0.8 + Math.random() * 1.2;
+      personStateRef.current[p] = {
+        x: W * 0.1 + Math.random() * (W * 0.8),
+        y: H * 0.1 + Math.random() * (H * 0.8),
+        dx: Math.cos(angle) * speed,
+        dy: Math.sin(angle) * speed,
+      };
+    });
+    const step = () => {
+      const W = window.innerWidth;
+      const H = window.innerHeight;
+      people.forEach(p => {
+        const s = personStateRef.current?.[p];
+        if (!s) return;
+        let {x, y, dx, dy} = s;
+        x += dx; y += dy;
+        if (x <= 0 || x >= W - SIZE) { dx = -dx; x = Math.max(0, Math.min(W - SIZE, x)); }
+        if (y <= 0 || y >= H - SIZE) { dy = -dy; y = Math.max(0, Math.min(H - SIZE, y)); }
+        personStateRef.current[p] = {x, y, dx, dy};
+        const el = personRefsMap.current[p];
+        if (el) { el.style.left = x + "px"; el.style.top = y + "px"; }
+      });
+      personRafRef.current = requestAnimationFrame(step);
+    };
+    personRafRef.current = requestAnimationFrame(step);
+    return () => {
+      if (personRafRef.current) cancelAnimationFrame(personRafRef.current);
+      personStateRef.current = null;
+    };
   }, [colorScheme]);
 
   const handleTonieTap = () => {
@@ -885,6 +934,31 @@ function BracketScorer() {
           </table>
         </div>
       </div>}
+      {/* Bouncing people avatars */}
+      {colorScheme === "tonie" && people.map(p => {
+        const isOut = !canWin[p];
+        const isLeading = rankNums[ranked.indexOf(p)] === 1;
+        return (
+          <div key={"avatar-"+p} ref={el => { personRefsMap.current[p] = el; }}
+            style={{position:"fixed",left:(personStateRef.current?.[p]?.x??50)+"px",
+              top:(personStateRef.current?.[p]?.y??50)+"px",
+              width:70,height:70,zIndex:9997,pointerEvents:"none",userSelect:"none"}}>
+            {isLeading && (
+              <span style={{position:"absolute",top:-22,left:"50%",transform:"translateX(-50%)",
+                fontSize:20,zIndex:1,filter:"drop-shadow(0 1px 2px rgba(0,0,0,0.5))"}}>👑</span>
+            )}
+            {isOut && (
+              <span style={{position:"absolute",top:-22,left:"50%",transform:"translateX(-50%)",
+                fontSize:20,zIndex:1,animation:"poop-float 1.4s ease-in-out infinite"}}>💩</span>
+            )}
+            <img src={"./headshots/"+names[p].split(" ")[0]+".jpg"} alt={names[p].split(" ")[0]}
+              style={{width:70,height:70,borderRadius:"50%",objectFit:"cover",
+                border:"3px solid white",display:"block",
+                boxShadow:"0 2px 12px rgba(0,0,0,0.5)"}} />
+          </div>
+        );
+      })}
+
       {/* Bouncing Tonie */}
       {colorScheme === "tonie" && !tonieHidden && (
         <img
