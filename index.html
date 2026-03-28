@@ -137,7 +137,7 @@ function BracketScorer() {
 
   const _up = new URLSearchParams(window.location.search);
   const [results, setResults] = useState(known_results);
-  const [activeRound, setActiveRound] = useState(_up.get("round") || "S16");
+  const [activeRound, setActiveRound] = useState(_up.get("round") || "E8");
   const [expandedGames, setExpandedGames] = useState(() => new Set((_up.get("picks") || "").split(",").filter(Boolean)));
   const [mode, setMode] = useState(_up.get("mode") || "time"); // "time" | "region" | "bracket"
   const [hideCompleted, setHideCompleted] = useState(_up.get("hide") === "1");
@@ -297,7 +297,7 @@ function BracketScorer() {
 
   useEffect(() => {
     const p = new URLSearchParams();
-    if (activeRound !== "S16") p.set("round", activeRound);
+    if (activeRound !== "E8") p.set("round", activeRound);
     if (hideCompleted) p.set("hide", "1");
     if (mode !== "time") p.set("mode", mode);
     if (expandedGames.size > 0) p.set("picks", [...expandedGames].join(","));
