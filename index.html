@@ -133,7 +133,7 @@ function BracketScorer() {
   // Tonie mode state
   const tonieImgRef = useRef(null);
   const toniePosRef = useRef({x: 120, y: 180});
-  const tonieVelRef = useRef({dx: 2.8, dy: 2.2});
+  const tonieVelRef = useRef({dx: 1.4, dy: 1.1});
   const tonieRafRef = useRef(null);
   const [tonieSpinning, setTonieSpinning] = useState(false);
   const [tonieHidden, setTonieHidden] = useState(false);
@@ -152,7 +152,7 @@ function BracketScorer() {
       if (tonieRafRef.current) cancelAnimationFrame(tonieRafRef.current);
       return;
     }
-    const SIZE = 90;
+    const SIZE = 140;
     const step = () => {
       const pos = toniePosRef.current;
       const vel = tonieVelRef.current;
@@ -890,7 +890,7 @@ function BracketScorer() {
             position:"fixed",
             left: toniePosRef.current.x + "px",
             top:  toniePosRef.current.y + "px",
-            width:90, height:90,
+            width:140, height:140,
             borderRadius:"50%",
             objectFit:"cover",
             cursor:"pointer",
