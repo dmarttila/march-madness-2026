@@ -14,6 +14,10 @@
       0%   { transform: rotate(0deg) scale(1); opacity: 1; }
       100% { transform: rotate(720deg) scale(0); opacity: 0; }
     }
+    @keyframes poop-float {
+      0%, 100% { transform: translateX(-50%) translateY(0) rotate(-12deg); }
+      50%       { transform: translateX(-50%) translateY(-6px) rotate(12deg); }
+    }
     @keyframes tonie-come-back {
       0%   { transform: rotate(-180deg) scale(0); opacity: 0; }
       65%  { transform: rotate(15deg) scale(1.25); opacity: 1; }
@@ -484,11 +488,16 @@ function BracketScorer() {
                 setSimOverrides(sim);
               }
             }}
-              style={{display:"inline-block",marginRight:8,cursor:"pointer",
+              style={{display:"inline-block",marginRight:8,cursor:"pointer",position:"relative",
               background: isSim ? "#2d1b4e" : lead ? chipLeadBg : chipBg,
               border: isSim ? "2px solid #a855f7" : lead ? "1px solid #3b82f6" : "1px solid "+border,
               borderRadius:8,padding:"8px 12px",textAlign:"center",verticalAlign:"top",
               boxShadow: isSim ? "0 0 12px rgba(168,85,247,0.4)" : lead ? "0 0 10px rgba(59,130,246,0.25)" : "none"}}>
+              {colorScheme==="tonie" && !canWin[p] && (
+                <span style={{position:"absolute",top:-14,left:"50%",fontSize:20,
+                  animation:"poop-float 1.4s ease-in-out infinite",
+                  pointerEvents:"none",zIndex:10}}>💩</span>
+              )}
               <div style={{fontSize:10,color:isSim?"#c084fc":lead?leadRank:textMuted}}>{medal} #{rank}</div>
               <div style={{fontSize:12,fontWeight:600,color:isSim?"#e2e8f0":lead?leadText:textSub}}>{names[p].split(" ")[0]}</div>
               <div style={{fontSize:20,fontWeight:700,color:isSim?"#c084fc":lead?leadScore:textMuted,lineHeight:"1.1"}}>{scores[p].total}</div>
