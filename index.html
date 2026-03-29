@@ -181,16 +181,16 @@ function BracketScorer() {
   const tonieSpinningRef = useRef(false);
   const gameOverRef = useRef(false);
 
-  // Auto-cycle colors every 10 seconds in tonie mode
+  // Auto-cycle colors every 10 seconds in tonie/game mode
   useEffect(() => {
-    if (colorScheme !== "tonie") return;
+    if (colorScheme !== "tonie" && colorScheme !== "game") return;
     const id = setInterval(() => setRandomSeed(n => n + 1), 10000);
     return () => clearInterval(id);
   }, [colorScheme]);
 
   // Bouncing Tonie animation
   useEffect(() => {
-    if (colorScheme !== "tonie") {
+    if (colorScheme !== "tonie" && colorScheme !== "game") {
       if (tonieRafRef.current) cancelAnimationFrame(tonieRafRef.current);
       return;
     }
@@ -220,7 +220,7 @@ function BracketScorer() {
 
   // Bouncing people avatars animation
   useEffect(() => {
-    if (colorScheme !== "tonie") {
+    if (colorScheme !== "tonie" && colorScheme !== "game") {
       if (personRafRef.current) cancelAnimationFrame(personRafRef.current);
       personStateRef.current = null;
       return;
@@ -289,7 +289,7 @@ function BracketScorer() {
 
   // Keyboard input for ship
   useEffect(() => {
-    if (colorScheme !== 'tonie') return;
+    if (colorScheme !== 'tonie' && colorScheme !== 'game') return;
     const down = (e) => {
       keysRef.current[e.key] = true;
       if (e.key === ' ' || e.key === 'Spacebar') { e.preventDefault(); fireBullet(); }
@@ -302,7 +302,7 @@ function BracketScorer() {
 
   // Space Invaders game loop
   useEffect(() => {
-    if (colorScheme !== 'tonie') {
+    if (colorScheme !== 'tonie' && colorScheme !== 'game') {
       if (gameRafRef.current) cancelAnimationFrame(gameRafRef.current);
       bulletsRef.current.forEach(b => b.el.parentNode?.removeChild(b.el));
       bulletsRef.current = [];
@@ -397,7 +397,7 @@ function BracketScorer() {
           const tcx = tp.x + 100, tcy = tp.y + 100;
           if (Math.hypot(shipCX - tcx, shipCY - tcy) < 120) shipHit = true;
         }
-        if (shipHit) {
+        if (shipHit && colorScheme === 'game') {
           boom(shipCX, shipCY); boom(shipCX - 15, shipCY + 10); boom(shipCX + 15, shipCY + 10);
           setGameOver(true);
         }
@@ -433,7 +433,7 @@ function BracketScorer() {
 
   // When all people + Tonie are gone, bring everyone back after 2s
   useEffect(() => {
-    if (colorScheme !== "tonie") return;
+    if (colorScheme !== "tonie" && colorScheme !== "game") return;
     if (!tonieHidden) return;
     if (hiddenPeople.size < people.length) return;
     setShowCelebration(true);
@@ -741,7 +741,8 @@ function BracketScorer() {
     );
   };
 
-  const T = colorScheme==="light" ? LIGHT_T : (colorScheme==="random"||colorScheme==="tonie") ? makeRandT(randomSeed) : DARK_T;
+  const isTonieMode = colorScheme === "tonie" || colorScheme === "game";
+  const T = colorScheme==="light" ? LIGHT_T : (colorScheme==="random" || isTonieMode) ? makeRandT(randomSeed) : DARK_T;
   const {pageBg,cardBg,headerBg,border,border2,text,textSub,textMuted,textDim,textDimmer,chipBg,chipLeadBg,leadText,leadScore,leadRank,inputBg,rowAlt} = T;
 
   return (
@@ -755,8 +756,8 @@ function BracketScorer() {
           <div style={{fontSize:11,color:textMuted}}>{Object.keys(results).length} / 63 results entered · Click team to set winner, click again to clear</div>
         </div>
         <div style={{display:"flex",gap:4,flexShrink:0}}>
-          {[["dark","🌙"],["light","☀️"],["random","🎨"],["tonie","T"]].map(([s,icon]) => (
-            <button key={s} onClick={() => { setColorScheme(s); if(s==="random"||s==="tonie") setRandomSeed(n=>n+1); }} style={{
+          {[["dark","🌙"],["light","☀️"],["random","🎨"],["tonie","T"],["game","🎮"]].map(([s,icon]) => (
+            <button key={s} onClick={() => { setColorScheme(s); if(s==="random"||isTonieMode||s==="game") setRandomSeed(n=>n+1); }} style={{
               background:colorScheme===s?"#3b82f6":border2,border:"none",borderRadius:6,
               padding:"5px 8px",cursor:"pointer",fontSize:s==="tonie"?13:15,fontWeight:s==="tonie"?"bold":undefined,
               opacity:colorScheme===s?1:0.55,
@@ -801,7 +802,7 @@ function BracketScorer() {
                   fontSize:22,pointerEvents:"none",zIndex:10,
                   filter:"drop-shadow(0 1px 3px rgba(0,0,0,0.5))"}}>👑</span>
               )}
-              {colorScheme==="tonie" && !canWin[p] && (
+              {isTonieMode && !canWin[p] && (
                 <span style={{position:"absolute",top:-14,left:"50%",fontSize:20,
                   animation:"poop-float 1.4s ease-in-out infinite",
                   pointerEvents:"none",zIndex:10}}>💩</span>
@@ -1187,7 +1188,7 @@ function BracketScorer() {
         </div>
       </div>}
       {/* Bouncing people avatars */}
-      {colorScheme === "tonie" && people.map((p, pi) => {
+      {isTonieMode && people.map((p, pi) => {
         if (hiddenPeople.has(p)) return null;
         const isOut = !canWin[p];
         const isLeading = rankNums[ranked.indexOf(p)] === 1;
@@ -1224,7 +1225,7 @@ function BracketScorer() {
       })}
 
       {/* Celebration overlay */}
-      {colorScheme === "tonie" && showCelebration && (
+      {isTonieMode && showCelebration && (
         <div style={{position:"fixed",inset:0,zIndex:99998,pointerEvents:"none",overflow:"hidden"}}>
           <div style={{position:"absolute",top:"42%",left:"50%",fontSize:72,textAlign:"center",
             lineHeight:1.2,animation:"celebration-pop 0.5s ease-out forwards"}}>
@@ -1244,7 +1245,7 @@ function BracketScorer() {
       )}
 
       {/* Score display */}
-      {colorScheme === "tonie" && (
+      {isTonieMode && (
         <div style={{position:"fixed",bottom:112,right:16,zIndex:10002,
           background:"#00000099",borderRadius:8,padding:"6px 14px",
           fontSize:14,color:"#fff",pointerEvents:"none",userSelect:"none",
@@ -1254,7 +1255,7 @@ function BracketScorer() {
       )}
 
       {/* Game over overlay */}
-      {colorScheme === "tonie" && gameOver && (
+      {isTonieMode && gameOver && (
         <div style={{position:"fixed",inset:0,zIndex:99998,pointerEvents:"none",overflow:"hidden",
           background:"rgba(0,0,0,0.65)"}}>
           <div style={{position:"absolute",top:"42%",left:"50%",
@@ -1271,7 +1272,7 @@ function BracketScorer() {
       )}
 
       {/* Space Invaders ship */}
-      {colorScheme === "tonie" && (
+      {isTonieMode && (
         <div ref={shipElRef} style={{
           position:"fixed", left:shipPosRef.current+"px", bottom:62,
           width:40, textAlign:"center", fontSize:36, lineHeight:"1",
@@ -1280,7 +1281,7 @@ function BracketScorer() {
         }}>🚀</div>
       )}
       {/* Mobile controls */}
-      {colorScheme === "tonie" && (
+      {isTonieMode && (
         <div style={{position:"fixed",bottom:8,left:0,right:0,display:"flex",
           justifyContent:"center",gap:12,zIndex:10001,userSelect:"none",WebkitUserSelect:"none"}}>
           <button
@@ -1308,7 +1309,7 @@ function BracketScorer() {
       )}
 
       {/* Bouncing Tonie */}
-      {colorScheme === "tonie" && !tonieHidden && (
+      {isTonieMode && !tonieHidden && (
         <img
           key={tonieKey}
           ref={tonieImgRef}
