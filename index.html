@@ -38,7 +38,7 @@
   <div id="root"></div>
 
   <script type="text/babel">
-    const { useState, useMemo, useEffect, useRef } = React;
+    const { useState, useMemo, useEffect, useRef, useCallback } = React;
 
 const GAMES_DATA = {"games":[{"id":"E1","round":"R1","region":"east","label":"East: (1) Duke vs (16) Siena","pts":1,"t1":"Duke","t2":"Siena","picks":{"doug":"Duke","blair":"Duke","emma":"Duke","grace":"Duke","jeff":"Duke","leslie":"Duke","max":"Duke","phyllis":"Duke","rosie":"Duke","taylor":"Duke","lori":"Duke"}},{"id":"E2","round":"R1","region":"east","label":"East: (8) Ohio St. vs (9) TCU","pts":1,"t1":"Ohio St.","t2":"TCU","picks":{"doug":"Ohio St.","blair":"Ohio St.","emma":"TCU","grace":"TCU","jeff":"Ohio St.","leslie":"TCU","max":"Ohio St.","phyllis":"Ohio St.","rosie":"TCU","taylor":"Ohio St.","lori":"Ohio St."}},{"id":"E3","round":"R1","region":"east","label":"East: (5) St. John's vs (12) N. Iowa","pts":1,"t1":"St. John's","t2":"N. Iowa","picks":{"doug":"St. John's","blair":"St. John's","emma":"St. John's","grace":"N. Iowa","jeff":"N. Iowa","leslie":"St. John's","max":"N. Iowa","phyllis":"St. John's","rosie":"St. John's","taylor":"St. John's","lori":"N. Iowa"}},{"id":"E4","round":"R1","region":"east","label":"East: (4) Kansas vs (13) Cal Baptist","pts":1,"t1":"Kansas","t2":"Cal Baptist","picks":{"doug":"Kansas","blair":"Kansas","emma":"Kansas","grace":"Cal Baptist","jeff":"Kansas","leslie":"Kansas","max":"Kansas","phyllis":"Kansas","rosie":"Kansas","taylor":"Kansas","lori":"Kansas"}},{"id":"E5","round":"R1","region":"east","label":"East: (6) Louisville vs (11) SFLA","pts":1,"t1":"Louisville","t2":"SFLA","picks":{"doug":"SFLA","blair":"SFLA","emma":"SFLA","grace":"SFLA","jeff":"Louisville","leslie":"Louisville","max":"Louisville","phyllis":"Louisville","rosie":"SFLA","taylor":"SFLA","lori":"SFLA"}},{"id":"E6","round":"R1","region":"east","label":"East: (3) Mich. St. vs (14) NDAKST","pts":1,"t1":"Michigan St.","t2":"NDAKST","picks":{"doug":"Michigan St.","blair":"Michigan St.","emma":"Michigan St.","grace":"Michigan St.","jeff":"Michigan St.","leslie":"Michigan St.","max":"Michigan St.","phyllis":"Michigan St.","rosie":"Michigan St.","taylor":"Michigan St.","lori":"Michigan St."}},{"id":"E7","round":"R1","region":"east","label":"East: (7) UCLA vs (10) UCF","pts":1,"t1":"UCLA","t2":"UCF","picks":{"doug":"UCLA","blair":"UCLA","emma":"UCLA","grace":"UCLA","jeff":"UCLA","leslie":"UCF","max":"UCLA","phyllis":"UCF","rosie":"UCLA","taylor":"UCLA","lori":"UCLA"}},{"id":"E8","round":"R1","region":"east","label":"East: (2) UConn vs (15) Furman","pts":1,"t1":"UConn","t2":"Furman","picks":{"doug":"UConn","blair":"UConn","emma":"UConn","grace":"UConn","jeff":"UConn","leslie":"UConn","max":"UConn","phyllis":"UConn","rosie":"UConn","taylor":"UConn","lori":"UConn"}},{"id":"S1","round":"R1","region":"south","label":"South: (1) Florida vs (16) PVAM","pts":1,"t1":"Florida","t2":"PVAM","picks":{"doug":"Florida","blair":"Florida","emma":"Florida","grace":"Florida","jeff":"Florida","leslie":"Florida","max":"Florida","phyllis":"Florida","rosie":"Florida","taylor":"Florida","lori":"Florida"}},{"id":"S2","round":"R1","region":"south","label":"South: (8) Clemson vs (9) Iowa","pts":1,"t1":"Clemson","t2":"Iowa","picks":{"doug":"Iowa","blair":"Iowa","emma":"Clemson","grace":"Clemson","jeff":"Iowa","leslie":"Iowa","max":"Clemson","phyllis":"Iowa","rosie":"Iowa","taylor":"Iowa","lori":"Iowa"}},{"id":"S3","round":"R1","region":"south","label":"South: (5) Vanderbilt vs (12) McNeese","pts":1,"t1":"Vanderbilt","t2":"McNeese","picks":{"doug":"Vanderbilt","blair":"Vanderbilt","emma":"Vanderbilt","grace":"Vanderbilt","jeff":"Vanderbilt","leslie":"Vanderbilt","max":"Vanderbilt","phyllis":"Vanderbilt","rosie":"Vanderbilt","taylor":"Vanderbilt","lori":"Vanderbilt"}},{"id":"S4","round":"R1","region":"south","label":"South: (4) Nebraska vs (13) Troy","pts":1,"t1":"Nebraska","t2":"Troy","picks":{"doug":"Nebraska","blair":"Nebraska","emma":"Nebraska","grace":"Nebraska","jeff":"Nebraska","leslie":"Nebraska","max":"Nebraska","phyllis":"Nebraska","rosie":"Nebraska","taylor":"Nebraska","lori":"Nebraska"}},{"id":"S5","round":"R1","region":"south","label":"South: (6) N. Carolina vs (11) VCU","pts":1,"t1":"N. Carolina","t2":"VCU","picks":{"doug":"VCU","blair":"N. Carolina","emma":"N. Carolina","grace":"N. Carolina","jeff":"N. Carolina","leslie":"N. Carolina","max":"VCU","phyllis":"VCU","rosie":"N. Carolina","taylor":"VCU","lori":"VCU"}},{"id":"S6","round":"R1","region":"south","label":"South: (3) Illinois vs (14) Penn","pts":1,"t1":"Illinois","t2":"Penn","picks":{"doug":"Penn","blair":"Illinois","emma":"Illinois","grace":"Illinois","jeff":"Illinois","leslie":"Illinois","max":"Illinois","phyllis":"Illinois","rosie":"Illinois","taylor":"Illinois","lori":"Illinois"}},{"id":"S7","round":"R1","region":"south","label":"South: (7) St. Mary's vs (10) Texas A&M","pts":1,"t1":"MARYCA","t2":"Texas A&M","picks":{"doug":"MARYCA","blair":"Texas A&M","emma":"MARYCA","grace":"Texas A&M","jeff":"MARYCA","leslie":"Texas A&M","max":"Texas A&M","phyllis":"Texas A&M","rosie":"MARYCA","taylor":"MARYCA","lori":"MARYCA"}},{"id":"S8","round":"R1","region":"south","label":"South: (2) Houston vs (15) Idaho","pts":1,"t1":"Houston","t2":"Idaho","picks":{"doug":"Houston","blair":"Houston","emma":"Houston","grace":"Houston","jeff":"Houston","leslie":"Houston","max":"Houston","phyllis":"Houston","rosie":"Houston","taylor":"Houston","lori":"Houston"}},{"id":"W1","round":"R1","region":"west","label":"West: (1) Arizona vs (16) LIU","pts":1,"t1":"Arizona","t2":"LIU","picks":{"doug":"Arizona","blair":"Arizona","emma":"Arizona","grace":"Arizona","jeff":"Arizona","leslie":"Arizona","max":"Arizona","phyllis":"Arizona","rosie":"Arizona","taylor":"Arizona","lori":"Arizona"}},{"id":"W2","round":"R1","region":"west","label":"West: (8) Villanova vs (9) Utah St.","pts":1,"t1":"Villanova","t2":"Utah St.","picks":{"doug":"Utah St.","blair":"Villanova","emma":"Villanova","grace":"Villanova","jeff":"Villanova","leslie":"Utah St.","max":"Villanova","phyllis":"Villanova","rosie":"Villanova","taylor":"Utah St.","lori":"Villanova"}},{"id":"W3","round":"R1","region":"west","label":"West: (5) Wisconsin vs (12) High Point","pts":1,"t1":"Wisconsin","t2":"High Point","picks":{"doug":"Wisconsin","blair":"Wisconsin","emma":"Wisconsin","grace":"Wisconsin","jeff":"Wisconsin","leslie":"Wisconsin","max":"High Point","phyllis":"Wisconsin","rosie":"Wisconsin","taylor":"Wisconsin","lori":"Wisconsin"}},{"id":"W4","round":"R1","region":"west","label":"West: (4) Arkansas vs (13) Hawaii","pts":1,"t1":"Arkansas","t2":"Hawaii","picks":{"doug":"Arkansas","blair":"Arkansas","emma":"Arkansas","grace":"Hawaii","jeff":"Arkansas","leslie":"Arkansas","max":"Arkansas","phyllis":"Arkansas","rosie":"Arkansas","taylor":"Arkansas","lori":"Arkansas"}},{"id":"W5","round":"R1","region":"west","label":"West: (6) BYU vs (11) Texas","pts":1,"t1":"BYU","t2":"Texas","picks":{"doug":"BYU","blair":"BYU","emma":"Texas","grace":"BYU","jeff":"BYU","leslie":"Texas","max":"BYU","phyllis":"BYU","rosie":"BYU","taylor":"BYU","lori":"BYU"}},{"id":"W6","round":"R1","region":"west","label":"West: (3) Gonzaga vs (14) Kennesaw St.","pts":1,"t1":"Gonzaga","t2":"KENSAW","picks":{"doug":"Gonzaga","blair":"Gonzaga","emma":"Gonzaga","grace":"KENSAW","jeff":"Gonzaga","leslie":"KENSAW","max":"Gonzaga","phyllis":"Gonzaga","rosie":"Gonzaga","taylor":"Gonzaga","lori":"Gonzaga"}},{"id":"W7","round":"R1","region":"west","label":"West: (7) Miami vs (10) Missouri","pts":1,"t1":"Miami","t2":"Missouri","picks":{"doug":"Miami","blair":"Miami","emma":"Missouri","grace":"Miami","jeff":"Miami","leslie":"Missouri","max":"Miami","phyllis":"Missouri","rosie":"Miami","taylor":"Miami","lori":"Missouri"}},{"id":"W8","round":"R1","region":"west","label":"West: (2) Purdue vs (15) Queens","pts":1,"t1":"Purdue","t2":"Queens","picks":{"doug":"Purdue","blair":"Purdue","emma":"Purdue","grace":"Purdue","jeff":"Purdue","leslie":"Purdue","max":"Purdue","phyllis":"Purdue","rosie":"Purdue","taylor":"Purdue","lori":"Purdue"}},{"id":"M1","round":"R1","region":"midwest","label":"Midwest: (1) Michigan vs (16) Howard","pts":1,"t1":"Michigan","t2":"Howard","picks":{"doug":"Michigan","blair":"Michigan","emma":"Michigan","grace":"Michigan","jeff":"Michigan","leslie":"Michigan","max":"Michigan","phyllis":"Michigan","rosie":"Michigan","taylor":"Michigan","lori":"Michigan"}},{"id":"M2","round":"R1","region":"midwest","label":"Midwest: (8) Georgia vs (9) St. Louis","pts":1,"t1":"Georgia","t2":"St. Louis","picks":{"doug":"St. Louis","blair":"Georgia","emma":"Georgia","grace":"Georgia","jeff":"St. Louis","leslie":"Georgia","max":"Georgia","phyllis":"Georgia","rosie":"St. Louis","taylor":"Georgia","lori":"Georgia"}},{"id":"M3","round":"R1","region":"midwest","label":"Midwest: (5) Texas Tech vs (12) Akron","pts":1,"t1":"Texas Tech","t2":"Akron","picks":{"doug":"Texas Tech","blair":"Texas Tech","emma":"Texas Tech","grace":"Akron","jeff":"Texas Tech","leslie":"Texas Tech","max":"Texas Tech","phyllis":"Texas Tech","rosie":"Texas Tech","taylor":"Texas Tech","lori":"Texas Tech"}},{"id":"M4","round":"R1","region":"midwest","label":"Midwest: (4) Alabama vs (13) Hofstra","pts":1,"t1":"Alabama","t2":"Hofstra","picks":{"doug":"Alabama","blair":"Alabama","emma":"Alabama","grace":"Alabama","jeff":"Hofstra","leslie":"Alabama","max":"Alabama","phyllis":"Alabama","rosie":"Alabama","taylor":"Alabama","lori":"Alabama"}},{"id":"M5","round":"R1","region":"midwest","label":"Midwest: (6) Tennessee vs (11) MIAOH","pts":1,"t1":"Tennessee","t2":"MIAOH","picks":{"doug":"MIAOH","blair":"Tennessee","emma":"Tennessee","grace":"Tennessee","jeff":"Tennessee","leslie":"Tennessee","max":"MIAOH","phyllis":"Tennessee","rosie":"Tennessee","taylor":"Tennessee","lori":"Tennessee"}},{"id":"M6","round":"R1","region":"midwest","label":"Midwest: (3) Virginia vs (14) Wright St.","pts":1,"t1":"Virginia","t2":"Wright St.","picks":{"doug":"Virginia","blair":"Virginia","emma":"Virginia","grace":"Virginia","jeff":"Virginia","leslie":"Virginia","max":"Virginia","phyllis":"Virginia","rosie":"Virginia","taylor":"Virginia","lori":"Virginia"}},{"id":"M7","round":"R1","region":"midwest","label":"Midwest: (7) Kentucky vs (10) Santa Clara","pts":1,"t1":"Kentucky","t2":"Santa Clara","picks":{"doug":"Santa Clara","blair":"Santa Clara","emma":"Kentucky","grace":"Santa Clara","jeff":"Santa Clara","leslie":"Kentucky","max":"Santa Clara","phyllis":"Kentucky","rosie":"Kentucky","taylor":"Santa Clara","lori":"Santa Clara"}},{"id":"M8","round":"R1","region":"midwest","label":"Midwest: (2) Iowa St. vs (15) Tenn. State","pts":1,"t1":"Iowa St.","t2":"Tenn. State","picks":{"doug":"Iowa St.","blair":"Iowa St.","emma":"Iowa St.","grace":"Iowa St.","jeff":"Iowa St.","leslie":"Iowa St.","max":"Iowa St.","phyllis":"Iowa St.","rosie":"Iowa St.","taylor":"Iowa St.","lori":"Iowa St."}},{"id":"EA","round":"R2","region":"east","label":"East R2: 1/8/9 side","pts":2,"t1":null,"t2":null,"picks":{"doug":"Duke","blair":"Duke","emma":"Duke","grace":"Duke","jeff":"Duke","leslie":"Duke","max":"Ohio St.","phyllis":"Duke","rosie":"Duke","taylor":"Duke","lori":"Duke"}},{"id":"EB","round":"R2","region":"east","label":"East R2: 5/4 side","pts":2,"t1":null,"t2":null,"picks":{"doug":"St. John's","blair":"St. John's","emma":"St. John's","grace":"N. Iowa","jeff":"N. Iowa","leslie":"St. John's","max":"Kansas","phyllis":"St. John's","rosie":"Kansas","taylor":"Kansas","lori":"Kansas"}},{"id":"EC","round":"R2","region":"east","label":"East R2: 6/3 side","pts":2,"t1":null,"t2":null,"picks":{"doug":"Michigan St.","blair":"SFLA","emma":"Michigan St.","grace":"Michigan St.","jeff":"Michigan St.","leslie":"Michigan St.","max":"Louisville","phyllis":"Louisville","rosie":"Michigan St.","taylor":"Michigan St.","lori":"Michigan St."}},{"id":"ED","round":"R2","region":"east","label":"East R2: 7/2 side","pts":2,"t1":null,"t2":null,"picks":{"doug":"UConn","blair":"UConn","emma":"UCLA","grace":"UConn","jeff":"UConn","leslie":"UConn","max":"UConn","phyllis":"UConn","rosie":"UConn","taylor":"UConn","lori":"UConn"}},{"id":"SA","round":"R2","region":"south","label":"South R2: 1/8/9 side","pts":2,"t1":null,"t2":null,"picks":{"doug":"Florida","blair":"Florida","emma":"Florida","grace":"Florida","jeff":"Florida","leslie":"Florida","max":"Florida","phyllis":"Florida","rosie":"Florida","taylor":"Florida","lori":"Florida"}},{"id":"SB","round":"R2","region":"south","label":"South R2: 5/4 side","pts":2,"t1":null,"t2":null,"picks":{"doug":"Vanderbilt","blair":"Vanderbilt","emma":"Vanderbilt","grace":"Vanderbilt","jeff":"Vanderbilt","leslie":"Vanderbilt","max":"Vanderbilt","phyllis":"Vanderbilt","rosie":"Vanderbilt","taylor":"Vanderbilt","lori":"Vanderbilt"}},{"id":"SC","round":"R2","region":"south","label":"South R2: 6/3 side","pts":2,"t1":null,"t2":null,"picks":{"doug":"VCU","blair":"Illinois","emma":"N. Carolina","grace":"Illinois","jeff":"Illinois","leslie":"N. Carolina","max":"Illinois","phyllis":"Illinois","rosie":"Illinois","taylor":"Illinois","lori":"Illinois"}},{"id":"SD","round":"R2","region":"south","label":"South R2: 7/2 side","pts":2,"t1":null,"t2":null,"picks":{"doug":"Houston","blair":"Houston","emma":"Houston","grace":"Houston","jeff":"Houston","leslie":"Houston","max":"Houston","phyllis":"Houston","rosie":"Houston","taylor":"Houston","lori":"Houston"}},{"id":"WA","round":"R2","region":"west","label":"West R2: 1/8/9 side","pts":2,"t1":null,"t2":null,"picks":{"doug":"Arizona","blair":"Arizona","emma":"Arizona","grace":"Arizona","jeff":"Arizona","leslie":"Arizona","max":"Arizona","phyllis":"Arizona","rosie":"Arizona","taylor":"Arizona","lori":"Arizona"}},{"id":"WB","round":"R2","region":"west","label":"West R2: 5/4 side","pts":2,"t1":null,"t2":null,"picks":{"doug":"Arkansas","blair":"Arkansas","emma":"Arkansas","grace":"Wisconsin","jeff":"Wisconsin","leslie":"Arkansas","max":"Arkansas","phyllis":"Wisconsin","rosie":"Arkansas","taylor":"Arkansas","lori":"Wisconsin"}},{"id":"WC","round":"R2","region":"west","label":"West R2: 6/3 side","pts":2,"t1":null,"t2":null,"picks":{"doug":"Gonzaga","blair":"BYU","emma":"Gonzaga","grace":"BYU","jeff":"BYU","leslie":"Texas","max":"BYU","phyllis":"BYU","rosie":"Gonzaga","taylor":"Gonzaga","lori":"Gonzaga"}},{"id":"WD","round":"R2","region":"west","label":"West R2: 7/2 side","pts":2,"t1":null,"t2":null,"picks":{"doug":"Purdue","blair":"Purdue","emma":"Purdue","grace":"Purdue","jeff":"Purdue","leslie":"Purdue","max":"Purdue","phyllis":"Purdue","rosie":"Purdue","taylor":"Purdue","lori":"Purdue"}},{"id":"MA","round":"R2","region":"midwest","label":"Midwest R2: 1/8/9 side","pts":2,"t1":null,"t2":null,"picks":{"doug":"Michigan","blair":"Michigan","emma":"Michigan","grace":"Michigan","jeff":"Michigan","leslie":"Michigan","max":"Michigan","phyllis":"Michigan","rosie":"Michigan","taylor":"Michigan","lori":"Michigan"}},{"id":"MB","round":"R2","region":"midwest","label":"Midwest R2: 5/4 side","pts":2,"t1":null,"t2":null,"picks":{"doug":"Alabama","blair":"Alabama","emma":"Texas Tech","grace":"Alabama","jeff":"Texas Tech","leslie":"Texas Tech","max":"Texas Tech","phyllis":"Texas Tech","rosie":"Alabama","taylor":"Texas Tech","lori":"Texas Tech"}},{"id":"MC","round":"R2","region":"midwest","label":"Midwest R2: 6/3 side","pts":2,"t1":null,"t2":null,"picks":{"doug":"Virginia","blair":"Virginia","emma":"Tennessee","grace":"Tennessee","jeff":"Virginia","leslie":"Virginia","max":"MIAOH","phyllis":"Virginia","rosie":"Tennessee","taylor":"Virginia","lori":"Virginia"}},{"id":"MD","round":"R2","region":"midwest","label":"Midwest R2: 7/2 side","pts":2,"t1":null,"t2":null,"picks":{"doug":"Santa Clara","blair":"Iowa St.","emma":"Kentucky","grace":"Iowa St.","jeff":"Iowa St.","leslie":"Kentucky","max":"Iowa St.","phyllis":"Kentucky","rosie":"Iowa St.","taylor":"Iowa St.","lori":"Iowa St."}},{"id":"ES1","round":"S16","region":"east","label":"East Sweet 16 (top)","pts":4,"t1":null,"t2":null,"picks":{"doug":"Duke","blair":"Duke","emma":"Duke","grace":"Duke","jeff":"Duke","leslie":"Duke","max":"Kansas","phyllis":"Duke","rosie":"Kansas","taylor":"Duke","lori":"Duke"}},{"id":"ES2","round":"S16","region":"east","label":"East Sweet 16 (bottom)","pts":4,"t1":null,"t2":null,"picks":{"doug":"Michigan St.","blair":"UConn","emma":"Michigan St.","grace":"UConn","jeff":"UConn","leslie":"UConn","max":"UConn","phyllis":"UConn","rosie":"Michigan St.","taylor":"UConn","lori":"Michigan St."}},{"id":"SS1","round":"S16","region":"south","label":"South Sweet 16 (top)","pts":4,"t1":null,"t2":null,"picks":{"doug":"Florida","blair":"Florida","emma":"Florida","grace":"Florida","jeff":"Florida","leslie":"Florida","max":"Florida","phyllis":"Florida","rosie":"Florida","taylor":"Florida","lori":"Florida"}},{"id":"SS2","round":"S16","region":"south","label":"South Sweet 16 (bottom)","pts":4,"t1":null,"t2":null,"picks":{"doug":"Houston","blair":"Houston","emma":"Houston","grace":"Illinois","jeff":"Houston","leslie":"N. Carolina","max":"Illinois","phyllis":"Houston","rosie":"Illinois","taylor":"Illinois","lori":"Houston"}},{"id":"WS1","round":"S16","region":"west","label":"West Sweet 16 (top)","pts":4,"t1":null,"t2":null,"picks":{"doug":"Arizona","blair":"Arizona","emma":"Arizona","grace":"Arizona","jeff":"Wisconsin","leslie":"Arizona","max":"Arizona","phyllis":"Arizona","rosie":"Arkansas","taylor":"Arizona","lori":"Arizona"}},{"id":"WS2","round":"S16","region":"west","label":"West Sweet 16 (bottom)","pts":4,"t1":null,"t2":null,"picks":{"doug":"Purdue","blair":"Purdue","emma":"Purdue","grace":"Purdue","jeff":"Purdue","leslie":"Purdue","max":"Purdue","phyllis":"Purdue","rosie":"Purdue","taylor":"Purdue","lori":"Purdue"}},{"id":"MS1","round":"S16","region":"midwest","label":"Midwest Sweet 16 (top)","pts":4,"t1":null,"t2":null,"picks":{"doug":"Michigan","blair":"Michigan","emma":"Texas Tech","grace":"Michigan","jeff":"Michigan","leslie":"Michigan","max":"Michigan","phyllis":"Michigan","rosie":"Alabama","taylor":"Michigan","lori":"Michigan"}},{"id":"MS2","round":"S16","region":"midwest","label":"Midwest Sweet 16 (bottom)","pts":4,"t1":null,"t2":null,"picks":{"doug":"Virginia","blair":"Iowa St.","emma":"Tennessee","grace":"Iowa St.","jeff":"Virginia","leslie":"Kentucky","max":"Iowa St.","phyllis":"Virginia","rosie":"Tennessee","taylor":"Virginia","lori":"Iowa St."}},{"id":"EE8","round":"E8","region":"east","label":"East Elite 8","pts":8,"t1":null,"t2":null,"picks":{"doug":"Duke","blair":"Duke","emma":"Duke","grace":"UConn","jeff":"Duke","leslie":"UConn","max":"UConn","phyllis":"Duke","rosie":"Michigan St.","taylor":"Duke","lori":"Michigan St."}},{"id":"SE8","round":"E8","region":"south","label":"South Elite 8","pts":8,"t1":null,"t2":null,"picks":{"doug":"Houston","blair":"Florida","emma":"Houston","grace":"Illinois","jeff":"Houston","leslie":"N. Carolina","max":"Illinois","phyllis":"Houston","rosie":"Illinois","taylor":"Florida","lori":"Houston"}},{"id":"WE8","round":"E8","region":"west","label":"West Elite 8","pts":8,"t1":null,"t2":null,"picks":{"doug":"Arizona","blair":"Arizona","emma":"Arizona","grace":"Purdue","jeff":"Wisconsin","leslie":"Purdue","max":"Arizona","phyllis":"Arizona","rosie":"Purdue","taylor":"Arizona","lori":"Arizona"}},{"id":"ME8","round":"E8","region":"midwest","label":"Midwest Elite 8","pts":8,"t1":null,"t2":null,"picks":{"doug":"Michigan","blair":"Michigan","emma":"Texas Tech","grace":"Michigan","jeff":"Michigan","leslie":"Kentucky","max":"Michigan","phyllis":"Virginia","rosie":"Alabama","taylor":"Michigan","lori":"Michigan"}},{"id":"FFL","round":"FF","region":null,"label":"Final Four (East vs South)","pts":16,"t1":null,"t2":null,"picks":{"doug":"Houston","blair":"Duke","emma":"Duke","grace":"UConn","jeff":"Houston","leslie":"UConn","max":"Illinois","phyllis":"Houston","rosie":"Michigan St.","taylor":"Florida","lori":"Houston"}},{"id":"FFR","round":"FF","region":null,"label":"Final Four (West vs Midwest)","pts":16,"t1":null,"t2":null,"picks":{"doug":"Michigan","blair":"Michigan","emma":"Arizona","grace":"Michigan","jeff":"Michigan","leslie":"Purdue","max":"Arizona","phyllis":"Arizona","rosie":"Alabama","taylor":"Michigan","lori":"Arizona"}},{"id":"CHAMP","round":"CHAMP","region":null,"label":"National Championship","pts":32,"t1":null,"t2":null,"picks":{"doug":"Michigan","blair":"Duke","emma":"Arizona","grace":"Michigan","jeff":"Michigan","leslie":"UConn","max":"Illinois","phyllis":"Arizona","rosie":"Michigan St.","taylor":"Florida","lori":"Arizona"}}],"known_results":{"E1":"Duke","E2":"TCU","E3":"St. John's","E4":"Kansas","E5":"Louisville","E6":"Michigan St.","E7":"UCLA","E8":"UConn","S1":"Florida","S2":"Iowa","S3":"Vanderbilt","S4":"Nebraska","S5":"VCU","S6":"Illinois","S7":"Texas A&M","S8":"Houston","W1":"Arizona","W2":"Utah St.","W3":"High Point","W4":"Arkansas","W5":"Texas","W6":"Gonzaga","W7":"Miami","W8":"Purdue","M1":"Michigan","M2":"St. Louis","M3":"Texas Tech","M4":"Alabama","M5":"Tennessee","M6":"Virginia","M7":"Kentucky","M8":"Iowa St.","MA":"Michigan","EC":"Michigan St.","EA":"Duke","SD":"Houston","WC":"Texas","SC":"Illinois","SB":"Nebraska","WB":"Arkansas","WD":"Purdue","MD":"Iowa St.","EB":"St. John's","MC":"Tennessee","SA":"Iowa","WA":"Arizona","ED":"UConn","MB":"Alabama","WS1":"Arizona","WS2":"Purdue","SS1":"Iowa","SS2":"Illinois","ES1":"Duke","ES2":"UConn","MS1":"Michigan","MS2":"Tennessee","SE8":"Illinois","WE8":"Arizona"},"names":{"doug":"Doug Marttila","blair":"Blair Darling","emma":"Emma Walton","grace":"Grace Darling","jeff":"Jeff Varhol","leslie":"Leslie Walton","max":"Max Darling","phyllis":"Phyllis Darling","rosie":"Rosie Marttila","taylor":"Tay tay","lori":"Lori Moravec"},"people":["doug","blair","emma","grace","jeff","leslie","max","phyllis","rosie","taylor","lori"]};
 
@@ -165,6 +165,18 @@ function BracketScorer() {
   const personStateRef = useRef(null);
   const personRafRef = useRef(null);
 
+  // Space Invaders refs
+  const shipElRef = useRef(null);
+  const shipPosRef = useRef(typeof window !== 'undefined' ? window.innerWidth / 2 - 20 : 200);
+  const keysRef = useRef({});
+  const bulletsRef = useRef([]);
+  const gameRafRef = useRef(null);
+  const lastShotRef = useRef(0);
+  const hiddenPeopleRef = useRef(new Set());
+  const spinningPeopleRef = useRef(new Set());
+  const tonieHiddenRef = useRef(false);
+  const tonieSpinningRef = useRef(false);
+
   // Auto-cycle colors every 10 seconds in tonie mode
   useEffect(() => {
     if (colorScheme !== "tonie") return;
@@ -243,6 +255,126 @@ function BracketScorer() {
     return () => {
       if (personRafRef.current) cancelAnimationFrame(personRafRef.current);
       personStateRef.current = null;
+    };
+  }, [colorScheme]);
+
+  // Mirror state to refs so RAF game loop can read without stale closures
+  useEffect(() => { hiddenPeopleRef.current = hiddenPeople; }, [hiddenPeople]);
+  useEffect(() => { spinningPeopleRef.current = spinningPeople; }, [spinningPeople]);
+  useEffect(() => { tonieHiddenRef.current = tonieHidden; }, [tonieHidden]);
+  useEffect(() => { tonieSpinningRef.current = tonieSpinning; }, [tonieSpinning]);
+
+  const fireBullet = useCallback(() => {
+    const now = Date.now();
+    if (now - lastShotRef.current < 350) return;
+    lastShotRef.current = now;
+    const SHIP_W = 40;
+    const bx = shipPosRef.current + SHIP_W / 2 - 4;
+    const by = window.innerHeight - 115;
+    const el = document.createElement('div');
+    Object.assign(el.style, {
+      position:'fixed', left:bx+'px', top:by+'px',
+      width:'8px', height:'20px', background:'#facc15',
+      borderRadius:'4px', zIndex:'10000', pointerEvents:'none',
+      boxShadow:'0 0 8px #facc15',
+    });
+    document.body.appendChild(el);
+    bulletsRef.current.push({ el, x: bx + 4, y: by });
+  }, []);
+
+  // Keyboard input for ship
+  useEffect(() => {
+    if (colorScheme !== 'tonie') return;
+    const down = (e) => {
+      keysRef.current[e.key] = true;
+      if (e.key === ' ' || e.key === 'Spacebar') { e.preventDefault(); fireBullet(); }
+    };
+    const up = (e) => { keysRef.current[e.key] = false; };
+    window.addEventListener('keydown', down);
+    window.addEventListener('keyup', up);
+    return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); };
+  }, [colorScheme, fireBullet]);
+
+  // Space Invaders game loop
+  useEffect(() => {
+    if (colorScheme !== 'tonie') {
+      if (gameRafRef.current) cancelAnimationFrame(gameRafRef.current);
+      bulletsRef.current.forEach(b => b.el.parentNode?.removeChild(b.el));
+      bulletsRef.current = [];
+      return;
+    }
+    const SHIP_W = 40, SHIP_SPEED = 5, BULLET_SPEED = 10;
+
+    const boom = (x, y) => {
+      const el = document.createElement('div');
+      Object.assign(el.style, {
+        position:'fixed', left:(x-18)+'px', top:(y-18)+'px',
+        fontSize:'36px', zIndex:'10001', pointerEvents:'none',
+        transition:'opacity 0.5s, transform 0.5s', opacity:'1', transform:'scale(1)',
+      });
+      el.textContent = '💥';
+      document.body.appendChild(el);
+      requestAnimationFrame(() => { el.style.opacity='0'; el.style.transform='scale(2)'; });
+      setTimeout(() => el.parentNode?.removeChild(el), 600);
+    };
+
+    const hitPerson = (p) => {
+      if (hiddenPeopleRef.current.has(p) || spinningPeopleRef.current.has(p)) return;
+      setRandomSeed(n => n + 1);
+      setSpinningPeople(prev => new Set([...prev, p]));
+      setTimeout(() => {
+        setSpinningPeople(prev => { const s = new Set(prev); s.delete(p); return s; });
+        setHiddenPeople(prev => new Set([...prev, p]));
+      }, 700);
+    };
+
+    const hitTonie = () => {
+      if (tonieHiddenRef.current || tonieSpinningRef.current) return;
+      setTonieSpinning(true);
+      setTimeout(() => { setTonieHidden(true); setTonieSpinning(false); }, 700);
+    };
+
+    const step = () => {
+      const W = window.innerWidth;
+      let sx = shipPosRef.current;
+      if (keysRef.current['ArrowLeft']) sx -= SHIP_SPEED;
+      if (keysRef.current['ArrowRight']) sx += SHIP_SPEED;
+      sx = Math.max(0, Math.min(W - SHIP_W, sx));
+      shipPosRef.current = sx;
+      if (shipElRef.current) shipElRef.current.style.left = sx + 'px';
+
+      const alive = [];
+      for (const b of bulletsRef.current) {
+        b.y -= BULLET_SPEED;
+        if (b.y < -30) { b.el.parentNode?.removeChild(b.el); continue; }
+        b.el.style.top = b.y + 'px';
+        let hit = false;
+        for (const p of people) {
+          if (hiddenPeopleRef.current.has(p) || spinningPeopleRef.current.has(p)) continue;
+          const ps = personStateRef.current?.[p];
+          if (!ps) continue;
+          const SIZE = 70, cx = ps.x + SIZE / 2, cy = ps.y + SIZE / 2;
+          if (Math.hypot(b.x - cx, b.y - cy) < SIZE / 2 + 4) {
+            hitPerson(p); boom(b.x, b.y); b.el.parentNode?.removeChild(b.el); hit = true; break;
+          }
+        }
+        if (!hit && !tonieHiddenRef.current && !tonieSpinningRef.current) {
+          const tp = toniePosRef.current;
+          const TSIZ = 200, tcx = tp.x + TSIZ / 2, tcy = tp.y + TSIZ / 2;
+          if (Math.hypot(b.x - tcx, b.y - tcy) < TSIZ / 2 + 4) {
+            hitTonie(); boom(b.x, b.y); b.el.parentNode?.removeChild(b.el); hit = true;
+          }
+        }
+        if (!hit) alive.push(b);
+      }
+      bulletsRef.current = alive;
+      gameRafRef.current = requestAnimationFrame(step);
+    };
+    gameRafRef.current = requestAnimationFrame(step);
+    return () => {
+      if (gameRafRef.current) cancelAnimationFrame(gameRafRef.current);
+      bulletsRef.current.forEach(b => b.el.parentNode?.removeChild(b.el));
+      bulletsRef.current = [];
     };
   }, [colorScheme]);
 
@@ -998,12 +1130,10 @@ function BracketScorer() {
         const size = isSelected ? 110 : 70;
         return (
           <div key={"avatar-"+p} ref={el => { personRefsMap.current[p] = el; }}
-            onClick={() => handlePersonTap(p)}
             style={{position:"fixed",left:(personStateRef.current?.[p]?.x??50)+"px",
               top:(personStateRef.current?.[p]?.y??50)+"px",
               width:size,height:size,zIndex:isSelected?9998:9997,
-              cursor:"pointer",userSelect:"none",
-              pointerEvents: isSpinning ? "none" : "auto",
+              userSelect:"none", pointerEvents:"none",
               transition:"width 0.3s,height 0.3s"}}>
             {isLeading && (
               <span style={{position:"absolute",top:-28,left:"50%",transform:"translateX(-50%)",
@@ -1046,6 +1176,43 @@ function BracketScorer() {
         </div>
       )}
 
+      {/* Space Invaders ship */}
+      {colorScheme === "tonie" && (
+        <div ref={shipElRef} style={{
+          position:"fixed", left:shipPosRef.current+"px", bottom:62,
+          width:40, textAlign:"center", fontSize:36, lineHeight:"1",
+          zIndex:10000, pointerEvents:"none", userSelect:"none",
+          filter:"drop-shadow(0 0 10px #60a5fa)",
+        }}>🚀</div>
+      )}
+      {/* Mobile controls */}
+      {colorScheme === "tonie" && (
+        <div style={{position:"fixed",bottom:8,left:0,right:0,display:"flex",
+          justifyContent:"center",gap:12,zIndex:10001,userSelect:"none",WebkitUserSelect:"none"}}>
+          <button
+            onTouchStart={e=>{e.preventDefault();keysRef.current['ArrowLeft']=true;}}
+            onTouchEnd={e=>{e.preventDefault();keysRef.current['ArrowLeft']=false;}}
+            onMouseDown={()=>keysRef.current['ArrowLeft']=true}
+            onMouseUp={()=>keysRef.current['ArrowLeft']=false}
+            onMouseLeave={()=>keysRef.current['ArrowLeft']=false}
+            style={{fontSize:24,padding:"10px 26px",borderRadius:8,border:"none",
+              background:"#1e293bcc",color:"#fff",cursor:"pointer",touchAction:"none"}}>◀</button>
+          <button
+            onTouchStart={e=>{e.preventDefault();fireBullet();}}
+            onClick={fireBullet}
+            style={{fontSize:14,fontWeight:"bold",padding:"10px 26px",borderRadius:8,border:"none",
+              background:"#facc15",color:"#000",cursor:"pointer",touchAction:"none"}}>FIRE</button>
+          <button
+            onTouchStart={e=>{e.preventDefault();keysRef.current['ArrowRight']=true;}}
+            onTouchEnd={e=>{e.preventDefault();keysRef.current['ArrowRight']=false;}}
+            onMouseDown={()=>keysRef.current['ArrowRight']=true}
+            onMouseUp={()=>keysRef.current['ArrowRight']=false}
+            onMouseLeave={()=>keysRef.current['ArrowRight']=false}
+            style={{fontSize:24,padding:"10px 26px",borderRadius:8,border:"none",
+              background:"#1e293bcc",color:"#fff",cursor:"pointer",touchAction:"none"}}>▶</button>
+        </div>
+      )}
+
       {/* Bouncing Tonie */}
       {colorScheme === "tonie" && !tonieHidden && (
         <img
@@ -1053,7 +1220,6 @@ function BracketScorer() {
           ref={tonieImgRef}
           src="./tonie.png"
           alt="Tonie"
-          onClick={handleTonieTap}
           style={{
             position:"fixed",
             left: toniePosRef.current.x + "px",
@@ -1062,12 +1228,11 @@ function BracketScorer() {
             borderRadius:"50%",
             objectFit:"cover",
             objectPosition:"center 20%",
-            cursor:"pointer",
             zIndex:9999,
             animation: tonieSpinning
               ? "tonie-spin-away 0.7s forwards ease-in"
               : "tonie-come-back 0.5s ease-out",
-            pointerEvents: tonieSpinning ? "none" : "auto",
+            pointerEvents:"none",
             userSelect:"none",
           }}
         />
