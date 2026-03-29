@@ -381,19 +381,25 @@ function BracketScorer() {
         }
         bulletsRef.current = alive;
 
-        // Check if any person collides with the ship
+        // Check if any person or Tonie collides with the ship
         const shipCX = shipPosRef.current + SHIP_W / 2;
         const shipCY = window.innerHeight - 80;
+        let shipHit = false;
         for (const p of people) {
           if (hiddenPeopleRef.current.has(p) || spinningPeopleRef.current.has(p)) continue;
           const ps = personStateRef.current?.[p];
           if (!ps) continue;
           const cx = ps.x + 35, cy = ps.y + 35;
-          if (Math.hypot(shipCX - cx, shipCY - cy) < 55) {
-            boom(shipCX, shipCY); boom(shipCX - 15, shipCY + 10); boom(shipCX + 15, shipCY + 10);
-            setGameOver(true);
-            break;
-          }
+          if (Math.hypot(shipCX - cx, shipCY - cy) < 55) { shipHit = true; break; }
+        }
+        if (!shipHit && !tonieHiddenRef.current && !tonieSpinningRef.current) {
+          const tp = toniePosRef.current;
+          const tcx = tp.x + 100, tcy = tp.y + 100;
+          if (Math.hypot(shipCX - tcx, shipCY - tcy) < 120) shipHit = true;
+        }
+        if (shipHit) {
+          boom(shipCX, shipCY); boom(shipCX - 15, shipCY + 10); boom(shipCX + 15, shipCY + 10);
+          setGameOver(true);
         }
       }
       gameRafRef.current = requestAnimationFrame(step);
