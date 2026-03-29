@@ -32,6 +32,10 @@
       0%   { transform: translateY(0)     rotate(0deg)   scale(1);   opacity:1; }
       100% { transform: translateY(110vh) rotate(540deg) scale(0.4); opacity:0; }
     }
+    @keyframes perfect-glow {
+      0%,100% { text-shadow: 0 0 20px #fbbf24, 0 0 40px #f59e0b, 0 2px 20px rgba(0,0,0,0.9); }
+      50%     { text-shadow: 0 0 50px #fbbf24, 0 0 100px #f59e0b, 0 0 140px #fde68a, 0 2px 20px rgba(0,0,0,0.9); }
+    }
   </style>
 </head>
 <body>
@@ -49,6 +53,40 @@ const REGION_COLORS = {east:"#818cf8",south:"#f87171",west:"#fb923c",midwest:"#4
 const PERSON_COLOR_LIST = ["#60a5fa","#f97316","#a78bfa","#34d399","#f43f5e","#facc15","#22d3ee","#fb923c","#86efac","#c084fc","#f9a8d4"];
 const REGION_LABELS = {east:"East",south:"South",west:"West",midwest:"Midwest"};
 const CHAMP_PICKS = {doug:"Michigan",blair:"Duke",emma:"Arizona",grace:"Michigan",jeff:"Michigan",leslie:"UConn",max:"Illinois",phyllis:"Arizona",rosie:"Michigan St.",taylor:"Florida",lori:"Arizona"};
+
+const getShootingRating = (misses) => {
+  if (misses === 0)  return { title:"⚡ SUPER AWESOME CHAMP ⚡", sub:"Perfect accuracy. Not a single shot wasted. You're a legend.", special:true };
+  if (misses === 1)  return { title:"🎯 Sharpshooter!", sub:"Just one stray bullet. Practically flawless." };
+  if (misses === 2)  return { title:"🏹 Dead Eye", sub:"Two misses? You're still legit good." };
+  if (misses === 3)  return { title:"🌟 Expert Marksman", sub:"Three misses. Nothing to be ashamed of." };
+  if (misses === 4)  return { title:"👍 Solid Shooter", sub:"Four misses. Pretty clean, honestly." };
+  if (misses === 5)  return { title:"😎 Not Bad!", sub:"Five misses. Room to grow but you've got the skills." };
+  if (misses === 6)  return { title:"🙂 Getting There", sub:"Six misses. You're above average. Barely." };
+  if (misses === 7)  return { title:"😐 Right Down the Middle", sub:"Seven misses. Perfectly mediocre." };
+  if (misses === 8)  return { title:"🤷 A Bit Sloppy", sub:"Eight misses. Try slowing down a little." };
+  if (misses === 9)  return { title:"🐌 Spray & Pray", sub:"Nine misses. Were you hoping for the best?" };
+  if (misses === 10) return { title:"😬 Trigger Happy", sub:"Ten misses. Less is more, my friend." };
+  if (misses === 11) return { title:"🤔 Hmm...", sub:"Eleven misses. Something to think about." };
+  if (misses === 12) return { title:"📉 More Misses Than Hits", sub:"Twelve misses. That ratio is not great." };
+  if (misses === 13) return { title:"😅 Lucky Number 13", sub:"Thirteen misses. The targets were scared of your wild shots." };
+  if (misses === 14) return { title:"🙈 Eyes Open, Please", sub:"Fourteen misses. Are you okay?" };
+  if (misses === 15) return { title:"🚨 Halfway to Terrible", sub:"Fifteen misses. The benchmark for mediocrity." };
+  if (misses === 16) return { title:"💸 Ammo Waster", sub:"Sixteen misses. Good thing bullets are free here." };
+  if (misses === 17) return { title:"🤦 Still Missing?", sub:"Seventeen misses. Remarkable in a bad way." };
+  if (misses === 18) return { title:"🌪️ Chaos Agent", sub:"Eighteen misses. Were you even aiming?" };
+  if (misses === 19) return { title:"📢 Quantity Strategy", sub:"Nineteen misses. Flooding the zone, I see." };
+  if (misses === 20) return { title:"😤 Twenty. TWENTY.", sub:"You wasted twenty bullets. Take a deep breath." };
+  if (misses === 21) return { title:"🤡 Are You Even Trying?", sub:"Twenty-one misses. Asking for a friend." };
+  if (misses === 22) return { title:"💥 Space Debris Champion", sub:"Twenty-two misses. The cosmos is full of your stray shots." };
+  if (misses === 23) return { title:"🐟 Missing on Purpose?", sub:"Twenty-three misses. It's the only logical explanation." };
+  if (misses === 24) return { title:"😂 The Avatars Are Judging You", sub:"Twenty-four misses. Even the eliminated ones pity you." };
+  if (misses === 25) return { title:"🎪 A Quarter Century of Misses", sub:"Twenty-five misses. A true milestone in bad shooting." };
+  if (misses === 26) return { title:"🐶 Tonie Is Embarrassed", sub:"Twenty-six misses. The dog is slowly shaking his head." };
+  if (misses === 27) return { title:"😭 This Is Painful to Watch", sub:"Twenty-seven misses. Someone get this person help." };
+  if (misses === 28) return { title:"🔧 Please Recalibrate", sub:"Twenty-eight misses. Something is clearly off." };
+  if (misses === 29) return { title:"⚠️ One More And...", sub:"Twenty-nine misses. You are on the very edge." };
+  return { title:"🎳 Finally!", sub:"You're a pretty bad shot. C'mon dude. Focus!" };
+};
 
 const firstName = n => { const p = n.split(" "); return p.length > 1 && /^[a-z]/.test(p[1]) ? n : p[0]; };
 const short = t => t.length > 11 ? t.replace("Michigan St.","Mich. St.").replace("St. John's","St. John's").replace("Cal Baptist","Cal Bap.").replace("Tenn. State","Tenn. St.").replace("Texas Tech","Tex. Tech").replace("High Point","Hi. Point").replace("Iowa St.","Iowa St.") : t;
@@ -162,6 +200,7 @@ function BracketScorer() {
   const [hits, setHits] = useState(0);
   const [misses, setMisses] = useState(0);
   const [gameOver, setGameOver] = useState(false);
+  const [showRating, setShowRating] = useState(false);
 
   // Bouncing people avatars
   const personRefsMap = useRef({});
@@ -431,12 +470,17 @@ function BracketScorer() {
     }, 700);
   };
 
-  // When all people + Tonie are gone, bring everyone back after 2s
+  // When all people + Tonie are gone, show rating (game) or celebration (tonie) then reset
   useEffect(() => {
     if (colorScheme !== "tonie" && colorScheme !== "game") return;
     if (!tonieHidden) return;
     if (hiddenPeople.size < people.length) return;
-    setShowCelebration(true);
+    if (colorScheme === "game") {
+      setShowRating(true);
+    } else {
+      setShowCelebration(true);
+    }
+    const delay = colorScheme === "game" ? 4000 : 2000;
     const timer = setTimeout(() => {
       const freshState = {};
       const SIZE = 70;
@@ -454,11 +498,14 @@ function BracketScorer() {
       });
       personStateRef.current = freshState;
       setShowCelebration(false);
+      setShowRating(false);
       setHiddenPeople(new Set());
       setSpinningPeople(new Set());
       setTonieHidden(false);
       setTonieKey(k => k + 1);
-    }, 2000);
+      setHits(0);
+      setMisses(0);
+    }, delay);
     return () => clearTimeout(timer);
   }, [tonieHidden, hiddenPeople, colorScheme]);
 
@@ -1270,6 +1317,34 @@ function BracketScorer() {
           </div>
         </div>
       )}
+
+      {/* Shooting rating overlay */}
+      {isTonieMode && showRating && (() => {
+        const rating = getShootingRating(misses);
+        return (
+          <div style={{position:"fixed",inset:0,zIndex:99998,pointerEvents:"none",overflow:"hidden",
+            background:"rgba(0,0,0,0.8)"}}>
+            <div style={{position:"absolute",top:"38%",left:"50%",
+              animation:"celebration-pop 0.5s ease-out forwards",
+              textAlign:"center",lineHeight:1.4,width:"90%",maxWidth:520,marginLeft:"-45%"}}>
+              <div style={{
+                fontSize: rating.special ? 36 : 32,
+                fontWeight:900,
+                color: rating.special ? "#fbbf24" : "#e2e8f0",
+                animation: rating.special ? "perfect-glow 1.5s ease-in-out infinite" : "none",
+                marginBottom:12,
+              }}>{rating.title}</div>
+              <div style={{fontSize:18,color:"#94a3b8",marginBottom:16}}>{rating.sub}</div>
+              <div style={{fontSize:13,color:"#475569"}}>🎯 {hits} hit{hits!==1?"s":""} &nbsp;·&nbsp; <span style={{color:"#f87171"}}>✗ {misses} miss{misses!==1?"es":""}</span></div>
+            </div>
+            {rating.special && ["⭐","✨","🌟","💛","⭐","✨","🌟","💛","⭐","✨","🌟","💛","⭐","✨","🌟","💛","⭐","✨"].map((e,i) => (
+              <span key={i} style={{position:"absolute",left:`${(i*5+4)%95}%`,top:-40,
+                fontSize:18+(i%4)*10,
+                animation:`confetti-fly ${1.1+(i%5)*0.28}s ${i*0.07}s ease-in forwards`}}>{e}</span>
+            ))}
+          </div>
+        );
+      })()}
 
       {/* Space Invaders ship */}
       {isTonieMode && (
