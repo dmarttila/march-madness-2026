@@ -640,6 +640,7 @@ function BracketScorer() {
   }, [scores, deadTeams, effectiveResults]);
 
   const ranked = [...people].sort((a,b) =>
+    (canWin[a] ? 0 : 1) - (canWin[b] ? 0 : 1) ||
     scores[b].total - scores[a].total ||
     maxPossible[b] - maxPossible[a] ||
     alivePicks[b] - alivePicks[a]
