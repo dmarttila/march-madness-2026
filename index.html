@@ -159,6 +159,9 @@ function BracketScorer() {
   const [hiddenPeople, setHiddenPeople] = useState(new Set());
   const [spinningPeople, setSpinningPeople] = useState(new Set());
   const [showCelebration, setShowCelebration] = useState(false);
+  const [hits, setHits] = useState(0);
+  const [misses, setMisses] = useState(0);
+  const [gameOver, setGameOver] = useState(false);
 
   // Bouncing people avatars
   const personRefsMap = useRef({});
@@ -176,6 +179,7 @@ function BracketScorer() {
   const spinningPeopleRef = useRef(new Set());
   const tonieHiddenRef = useRef(false);
   const tonieSpinningRef = useRef(false);
+  const gameOverRef = useRef(false);
 
   // Auto-cycle colors every 10 seconds in tonie mode
   useEffect(() => {
@@ -263,6 +267,7 @@ function BracketScorer() {
   useEffect(() => { spinningPeopleRef.current = spinningPeople; }, [spinningPeople]);
   useEffect(() => { tonieHiddenRef.current = tonieHidden; }, [tonieHidden]);
   useEffect(() => { tonieSpinningRef.current = tonieSpinning; }, [tonieSpinning]);
+  useEffect(() => { gameOverRef.current = gameOver; }, [gameOver]);
 
   const fireBullet = useCallback(() => {
     const now = Date.now();
@@ -335,39 +340,62 @@ function BracketScorer() {
     };
 
     const step = () => {
-      const W = window.innerWidth;
-      let sx = shipPosRef.current;
-      if (keysRef.current['ArrowLeft']) sx -= SHIP_SPEED;
-      if (keysRef.current['ArrowRight']) sx += SHIP_SPEED;
-      sx = Math.max(0, Math.min(W - SHIP_W, sx));
-      shipPosRef.current = sx;
-      if (shipElRef.current) shipElRef.current.style.left = sx + 'px';
+      if (!gameOverRef.current) {
+        const W = window.innerWidth;
+        let sx = shipPosRef.current;
+        if (keysRef.current['ArrowLeft']) sx -= SHIP_SPEED;
+        if (keysRef.current['ArrowRight']) sx += SHIP_SPEED;
+        sx = Math.max(0, Math.min(W - SHIP_W, sx));
+        shipPosRef.current = sx;
+        if (shipElRef.current) shipElRef.current.style.left = sx + 'px';
 
-      const alive = [];
-      for (const b of bulletsRef.current) {
-        b.y -= BULLET_SPEED;
-        if (b.y < -30) { b.el.parentNode?.removeChild(b.el); continue; }
-        b.el.style.top = b.y + 'px';
-        let hit = false;
+        const alive = [];
+        for (const b of bulletsRef.current) {
+          b.y -= BULLET_SPEED;
+          if (b.y < -30) {
+            b.el.parentNode?.removeChild(b.el);
+            setMisses(m => m + 1);
+            continue;
+          }
+          b.el.style.top = b.y + 'px';
+          let hit = false;
+          for (const p of people) {
+            if (hiddenPeopleRef.current.has(p) || spinningPeopleRef.current.has(p)) continue;
+            const ps = personStateRef.current?.[p];
+            if (!ps) continue;
+            const SIZE = 70, cx = ps.x + SIZE / 2, cy = ps.y + SIZE / 2;
+            if (Math.hypot(b.x - cx, b.y - cy) < SIZE / 2 + 4) {
+              hitPerson(p); boom(b.x, b.y); setHits(h => h + 1);
+              b.el.parentNode?.removeChild(b.el); hit = true; break;
+            }
+          }
+          if (!hit && !tonieHiddenRef.current && !tonieSpinningRef.current) {
+            const tp = toniePosRef.current;
+            const TSIZ = 200, tcx = tp.x + TSIZ / 2, tcy = tp.y + TSIZ / 2;
+            if (Math.hypot(b.x - tcx, b.y - tcy) < TSIZ / 2 + 4) {
+              hitTonie(); boom(b.x, b.y); setHits(h => h + 1);
+              b.el.parentNode?.removeChild(b.el); hit = true;
+            }
+          }
+          if (!hit) alive.push(b);
+        }
+        bulletsRef.current = alive;
+
+        // Check if any person collides with the ship
+        const shipCX = shipPosRef.current + SHIP_W / 2;
+        const shipCY = window.innerHeight - 80;
         for (const p of people) {
           if (hiddenPeopleRef.current.has(p) || spinningPeopleRef.current.has(p)) continue;
           const ps = personStateRef.current?.[p];
           if (!ps) continue;
-          const SIZE = 70, cx = ps.x + SIZE / 2, cy = ps.y + SIZE / 2;
-          if (Math.hypot(b.x - cx, b.y - cy) < SIZE / 2 + 4) {
-            hitPerson(p); boom(b.x, b.y); b.el.parentNode?.removeChild(b.el); hit = true; break;
+          const cx = ps.x + 35, cy = ps.y + 35;
+          if (Math.hypot(shipCX - cx, shipCY - cy) < 55) {
+            boom(shipCX, shipCY); boom(shipCX - 15, shipCY + 10); boom(shipCX + 15, shipCY + 10);
+            setGameOver(true);
+            break;
           }
         }
-        if (!hit && !tonieHiddenRef.current && !tonieSpinningRef.current) {
-          const tp = toniePosRef.current;
-          const TSIZ = 200, tcx = tp.x + TSIZ / 2, tcy = tp.y + TSIZ / 2;
-          if (Math.hypot(b.x - tcx, b.y - tcy) < TSIZ / 2 + 4) {
-            hitTonie(); boom(b.x, b.y); b.el.parentNode?.removeChild(b.el); hit = true;
-          }
-        }
-        if (!hit) alive.push(b);
       }
-      bulletsRef.current = alive;
       gameRafRef.current = requestAnimationFrame(step);
     };
     gameRafRef.current = requestAnimationFrame(step);
@@ -427,6 +455,39 @@ function BracketScorer() {
     }, 2000);
     return () => clearTimeout(timer);
   }, [tonieHidden, hiddenPeople, colorScheme]);
+
+  // Game over: bring everyone back after 2s
+  useEffect(() => {
+    if (!gameOver) return;
+    // Clear any in-flight bullets immediately
+    bulletsRef.current.forEach(b => b.el.parentNode?.removeChild(b.el));
+    bulletsRef.current = [];
+    const timer = setTimeout(() => {
+      const freshState = {};
+      const SIZE = 70;
+      people.forEach((p, i) => {
+        const W = window.innerWidth;
+        const H = window.innerHeight;
+        const angle = (i / people.length) * Math.PI * 2 + Math.random() * 0.5;
+        const speed = 0.8 + Math.random() * 1.2;
+        freshState[p] = {
+          x: W * 0.1 + Math.random() * (W * 0.8 - SIZE),
+          y: H * 0.1 + Math.random() * (H * 0.8 - SIZE),
+          dx: Math.cos(angle) * speed,
+          dy: Math.sin(angle) * speed,
+        };
+      });
+      personStateRef.current = freshState;
+      setHiddenPeople(new Set());
+      setSpinningPeople(new Set());
+      setTonieHidden(false);
+      setTonieKey(k => k + 1);
+      setHits(0);
+      setMisses(0);
+      setGameOver(false);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [gameOver]);
 
   useEffect(() => {
     const p = new URLSearchParams();
@@ -1173,6 +1234,33 @@ function BracketScorer() {
               animation:`confetti-fly ${1.2+(i%5)*0.25}s ${i*0.08}s ease-in forwards`,
             }}>{e}</span>
           ))}
+        </div>
+      )}
+
+      {/* Score display */}
+      {colorScheme === "tonie" && (
+        <div style={{position:"fixed",bottom:112,right:16,zIndex:10002,
+          background:"#00000099",borderRadius:8,padding:"6px 14px",
+          fontSize:14,color:"#fff",pointerEvents:"none",userSelect:"none",
+          fontWeight:700,letterSpacing:"0.5px"}}>
+          🎯 {hits} &nbsp;·&nbsp; <span style={{color:"#f87171"}}>✗ {misses}</span>
+        </div>
+      )}
+
+      {/* Game over overlay */}
+      {colorScheme === "tonie" && gameOver && (
+        <div style={{position:"fixed",inset:0,zIndex:99998,pointerEvents:"none",overflow:"hidden",
+          background:"rgba(0,0,0,0.65)"}}>
+          <div style={{position:"absolute",top:"42%",left:"50%",
+            animation:"celebration-pop 0.5s ease-out forwards",
+            textAlign:"center",lineHeight:1.3}}>
+            <div style={{fontSize:72}}>💀</div>
+            <div style={{fontSize:42,fontWeight:900,color:"#ef4444",
+              textShadow:"0 2px 20px rgba(0,0,0,0.9)"}}>YOU LOSE!!</div>
+            <div style={{fontSize:16,color:"#fca5a5",marginTop:8}}>
+              {hits} hit{hits !== 1 ? "s" : ""} · {misses} miss{misses !== 1 ? "es" : ""}
+            </div>
+          </div>
         </div>
       )}
 
