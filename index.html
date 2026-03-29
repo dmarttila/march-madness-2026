@@ -756,10 +756,10 @@ function BracketScorer() {
           <div style={{fontSize:11,color:textMuted}}>{Object.keys(results).length} / 63 results entered · Click team to set winner, click again to clear</div>
         </div>
         <div style={{display:"flex",gap:4,flexShrink:0}}>
-          {[["dark","🌙"],["light","☀️"],["random","🎨"],["tonie","T"],["game","🎮"]].map(([s,icon]) => (
+          {[["dark","🌙"],["light","☀️"],["random","🎨"],["tonie","🐶"],["game","💀"]].map(([s,icon]) => (
             <button key={s} onClick={() => { setColorScheme(s); if(s==="random"||isTonieMode||s==="game") setRandomSeed(n=>n+1); }} style={{
               background:colorScheme===s?"#3b82f6":border2,border:"none",borderRadius:6,
-              padding:"5px 8px",cursor:"pointer",fontSize:s==="tonie"?13:15,fontWeight:s==="tonie"?"bold":undefined,
+              padding:"5px 8px",cursor:"pointer",fontSize:15,
               opacity:colorScheme===s?1:0.55,
             }}>
               {icon}
